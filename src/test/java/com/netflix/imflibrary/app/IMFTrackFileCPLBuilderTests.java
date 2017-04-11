@@ -29,13 +29,13 @@ import java.nio.file.Files;
 @Test(groups = "unit")
 public class IMFTrackFileCPLBuilderTests {
 
-    @Test
-    public void IMFTrackFileCPLBuilderTest() throws IOException
-    {
-        File inputFile = TestHelper.findResourceByPath("TearsOfSteel_4k_Test_Master_Audio_002.mxf");
-        File workingDirectory = Files.createTempDirectory(null).toFile();
-        IMFTrackFileCPLBuilder imfTrackFileCPLBuilder = new IMFTrackFileCPLBuilder(workingDirectory, inputFile);
-        IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
-        Assert.assertTrue(imfTrackFileCPLBuilder.getCompositionPlaylist(imfErrorLogger).length() > 0);
-    }
+//    @Test
+//    public void IMFTrackFileCPLBuilderTest() throws IOException
+//    {
+//        File inputFile = TestHelper.findResourceByPath("TearsOfSteel_4k_Test_Master_Audio_002.mxf");
+//        File workingDirectory = Files.createTempDirectory(null).toFile();
+//        IMFTrackFileCPLBuilder imfTrackFileCPLBuilder = new IMFTrackFileCPLBuilder(workingDirectory, inputFile);
+//        IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
+//        Assert.assertTrue(imfTrackFileCPLBuilder.getCompositionPlaylist(imfErrorLogger).length() > 0);
+//    }
 }

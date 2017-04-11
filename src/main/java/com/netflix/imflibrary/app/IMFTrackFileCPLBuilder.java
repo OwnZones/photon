@@ -83,7 +83,7 @@ final class IMFTrackFileCPLBuilder {
     private final RegXMLLibHelper regXMLLibHelper;
     private final File workingDirectory;
     private final org.smpte_ra.schemas.st2067_2_2013.CompositionPlaylistType cplRoot;
-    private final File mxfFile;
+    //private final File mxfFile;
     private final String fileName;
 
 
@@ -94,8 +94,7 @@ final class IMFTrackFileCPLBuilder {
      * @param essenceFile - File representing an IMF Essence
      * @throws IOException - any I/O related error will be exposed through an IOException
      */
-    public IMFTrackFileCPLBuilder(File workingDirectory, File essenceFile) throws IOException {
-        ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(essenceFile);
+    public IMFTrackFileCPLBuilder(File workingDirectory, String fileName, ResourceByteRangeProvider resourceByteRangeProvider) throws IOException {
         this.imfTrackFileReader = new IMFTrackFileReader(workingDirectory, resourceByteRangeProvider);
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         KLVPacket.Header primerPackHeader = this.imfTrackFileReader.getPrimerPackHeader(imfErrorLogger);
@@ -103,8 +102,8 @@ final class IMFTrackFileCPLBuilder {
         this.workingDirectory = workingDirectory;
         /*Peek into the CompositionPlayListType and recursively construct its constituent fields*/
         this.cplRoot = IMFCPLObjectFieldsFactory.constructCompositionPlaylistType_2013();
-        this.mxfFile = essenceFile;
-        this.fileName = this.mxfFile.getName();
+        //this.mxfFile = essenceFile;
+        this.fileName = fileName;
     }
 
     /**
@@ -161,7 +160,7 @@ final class IMFTrackFileCPLBuilder {
     }
 
     private File serializeCPL() throws IOException {
-        File outputFile = new File(this.workingDirectory + "/" + this.mxfFile.getName() + ".xml");
+        File outputFile = new File(this.workingDirectory + "/" + this.fileName + ".xml");
         IMFUtils.writeCPLToFile(this.cplRoot, outputFile);
         return outputFile;
     }
@@ -341,7 +340,8 @@ final class IMFTrackFileCPLBuilder {
         /*Key Id*/
         trackFileResourceType.setKeyId(IMFUUIDGenerator.getInstance().getUrnUUID());
         /*Hash*/
-        trackFileResourceType.setHash(IMFUtils.generateSHA1HashAndBase64Encode(this.mxfFile));
+        //trackFileResourceType.setHash(IMFUtils.generateSHA1HashAndBase64Encode(this.mxfFile));
+        trackFileResourceType.setHash(new byte[0]);
 
         /*Add the constructed TrackFileResourceType to the ResourceTypes list*/
         BaseResourceType baseResourceType = (BaseResourceType)trackFileResourceType;
@@ -419,58 +419,58 @@ final class IMFTrackFileCPLBuilder {
         return sb.toString();
     }
 
-    public static void main(String[] args){
-
-        if (args.length != 2)
-        {
-            logger.error(usage());
-            throw new IllegalArgumentException("Invalid parameters");
-        }
-
-        File inputFile = new File(args[0]);
-        if(!inputFile.exists()){
-            logger.error(String.format("File %s does not exist", inputFile.getAbsolutePath()));
-            System.exit(-1);
-        }
-        File workingDirectory = new File(args[1]);
-
-        logger.info(String.format("File Name is %s", inputFile.getName()));
-        ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
-        IMFTrackFileReader imfTrackFileReader = new IMFTrackFileReader(workingDirectory, resourceByteRangeProvider);
-        StringBuilder sb = new StringBuilder();
-        IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
-
-        try
-        {
-            IMFTrackFileCPLBuilder imfTrackFileCPLBuilder = new IMFTrackFileCPLBuilder(workingDirectory, inputFile);
-            sb.append(imfTrackFileReader.getRandomIndexPack(imfErrorLogger));
-            logger.info(String.format("%s", sb.toString()));
-
-            imfTrackFileCPLBuilder.getCompositionPlaylist(imfErrorLogger);
-        }
-        catch(IOException e)
-        {
-            throw new IMFException(e);
-        }
-        List<ErrorLogger.ErrorObject> errors = imfErrorLogger.getErrors();
-        if(errors.size() > 0){
-            long warningCount = errors.stream().filter(e -> e.getErrorLevel().equals(IMFErrorLogger.IMFErrors.ErrorLevels
-                    .WARNING)).count();
-            logger.info(String.format("IMFTrackFile has %d errors and %d warnings",
-                    errors.size() - warningCount, warningCount));
-            for(ErrorLogger.ErrorObject errorObject : errors){
-                if(errorObject.getErrorLevel() != IMFErrorLogger.IMFErrors.ErrorLevels.WARNING) {
-                    logger.error(errorObject.toString());
-                }
-                else if(errorObject.getErrorLevel() == IMFErrorLogger.IMFErrors.ErrorLevels.WARNING) {
-                    logger.warn(errorObject.toString());
-                }
-            }
-        }
-        else{
-            logger.info(imfTrackFileReader.toString());
-            logger.info("No errors were detected in the IMFTrackFile");
-        }
-    }
+//    public static void main(String[] args){
+//
+//        if (args.length != 2)
+//        {
+//            logger.error(usage());
+//            throw new IllegalArgumentException("Invalid parameters");
+//        }
+//
+//        File inputFile = new File(args[0]);
+//        if(!inputFile.exists()){
+//            logger.error(String.format("File %s does not exist", inputFile.getAbsolutePath()));
+//            System.exit(-1);
+//        }
+//        File workingDirectory = new File(args[1]);
+//
+//        logger.info(String.format("File Name is %s", inputFile.getName()));
+//        ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
+//        IMFTrackFileReader imfTrackFileReader = new IMFTrackFileReader(workingDirectory, resourceByteRangeProvider);
+//        StringBuilder sb = new StringBuilder();
+//        IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
+//
+//        try
+//        {
+//            IMFTrackFileCPLBuilder imfTrackFileCPLBuilder = new IMFTrackFileCPLBuilder(workingDirectory, inputFile);
+//            sb.append(imfTrackFileReader.getRandomIndexPack(imfErrorLogger));
+//            logger.info(String.format("%s", sb.toString()));
+//
+//            imfTrackFileCPLBuilder.getCompositionPlaylist(imfErrorLogger);
+//        }
+//        catch(IOException e)
+//        {
+//            throw new IMFException(e);
+//        }
+//        List<ErrorLogger.ErrorObject> errors = imfErrorLogger.getErrors();
+//        if(errors.size() > 0){
+//            long warningCount = errors.stream().filter(e -> e.getErrorLevel().equals(IMFErrorLogger.IMFErrors.ErrorLevels
+//                    .WARNING)).count();
+//            logger.info(String.format("IMFTrackFile has %d errors and %d warnings",
+//                    errors.size() - warningCount, warningCount));
+//            for(ErrorLogger.ErrorObject errorObject : errors){
+//                if(errorObject.getErrorLevel() != IMFErrorLogger.IMFErrors.ErrorLevels.WARNING) {
+//                    logger.error(errorObject.toString());
+//                }
+//                else if(errorObject.getErrorLevel() == IMFErrorLogger.IMFErrors.ErrorLevels.WARNING) {
+//                    logger.warn(errorObject.toString());
+//                }
+//            }
+//        }
+//        else{
+//            logger.info(imfTrackFileReader.toString());
+//            logger.info("No errors were detected in the IMFTrackFile");
+//        }
+//    }
 
 }

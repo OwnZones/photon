@@ -18,6 +18,7 @@
 
 package com.netflix.imflibrary.app;
 
+import com.amazonaws.services.s3.AmazonS3URI;
 import com.netflix.imflibrary.*;
 import com.netflix.imflibrary.exceptions.IMFException;
 import com.netflix.imflibrary.exceptions.MXFException;
@@ -32,13 +33,7 @@ import com.netflix.imflibrary.st0377.header.GenericPackage;
 import com.netflix.imflibrary.st0377.header.InterchangeObject;
 import com.netflix.imflibrary.st0377.header.Preface;
 import com.netflix.imflibrary.st0377.header.SourcePackage;
-import com.netflix.imflibrary.utils.ByteArrayDataProvider;
-import com.netflix.imflibrary.utils.ByteProvider;
-import com.netflix.imflibrary.utils.ErrorLogger;
-import com.netflix.imflibrary.utils.FileByteRangeProvider;
-import com.netflix.imflibrary.utils.FileDataProvider;
-import com.netflix.imflibrary.utils.ResourceByteRangeProvider;
-import com.netflix.imflibrary.utils.Utilities;
+import com.netflix.imflibrary.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -62,7 +57,7 @@ import java.util.*;
  * A simple application to exercise the core logic of Photon for reading and validating IMF Track files.
  */
 @ThreadSafe
-final class IMFTrackFileReader
+public final class IMFTrackFileReader
 {
     private final File workingDirectory;
     private final ResourceByteRangeProvider resourceByteRangeProvider;
@@ -80,7 +75,7 @@ final class IMFTrackFileReader
      * @param workingDirectory the working directory
      * @param resourceByteRangeProvider the MXF file represented as a {@link com.netflix.imflibrary.utils.ResourceByteRangeProvider}
      */
-    IMFTrackFileReader(File workingDirectory, ResourceByteRangeProvider resourceByteRangeProvider)
+    public IMFTrackFileReader(File workingDirectory, ResourceByteRangeProvider resourceByteRangeProvider)
     {
         this.workingDirectory = workingDirectory;
         this.resourceByteRangeProvider = resourceByteRangeProvider;
@@ -571,7 +566,7 @@ final class IMFTrackFileReader
      * @param imfErrorLogger an error logger for recording any errors - cannot be null
      * @return a BigInteger representing the EditRate of the essence
      */
-    BigInteger getEssenceEditRate(@Nonnull IMFErrorLogger imfErrorLogger) throws IOException {
+    public BigInteger getEssenceEditRate(@Nonnull IMFErrorLogger imfErrorLogger) throws IOException {
         BigInteger result = BigInteger.valueOf(0);
         if(!(this.getHeaderPartition(imfErrorLogger).getEssenceDescriptors().size() > 0)){
             imfErrorLogger.addError(new ErrorLogger.ErrorObject(IMFErrorLogger.IMFErrors.ErrorCodes.IMF_ESSENCE_COMPONENT_ERROR, IMFErrorLogger.IMFErrors.ErrorLevels.FATAL, String.format("No EssenceDescriptors were found in " +
@@ -592,7 +587,7 @@ final class IMFTrackFileReader
      * @param imfErrorLogger an error logger for recording any errors - cannot be null
      * @return editRate of the essence as a List of Long Integers
      */
-    List<Long> getEssenceEditRateAsList(@Nonnull IMFErrorLogger imfErrorLogger) throws IOException {
+    public List<Long> getEssenceEditRateAsList(@Nonnull IMFErrorLogger imfErrorLogger) throws IOException {
         if(!(this.getHeaderPartition(imfErrorLogger).getEssenceDescriptors().size() > 0)){
             throw new MXFException(String.format("No EssenceDescriptors were found in the MXF essence"));
         }
@@ -605,7 +600,7 @@ final class IMFTrackFileReader
      * @param imfErrorLogger an error logger for recording any errors - cannot be null
      * @return essenceDuration
      */
-    BigInteger getEssenceDuration(@Nonnull IMFErrorLogger imfErrorLogger) throws IOException {
+    public BigInteger getEssenceDuration(@Nonnull IMFErrorLogger imfErrorLogger) throws IOException {
         return this.getHeaderPartition(imfErrorLogger).getEssenceDuration();
     }
 
@@ -613,7 +608,7 @@ final class IMFTrackFileReader
      * A method to return the TrackFileId which is a UUID identifying the track file
      * @return UUID identifying the Track File
      */
-    UUID getTrackFileId(){
+    public UUID getTrackFileId(){
 
         Preface preface = this.headerPartition.getHeaderPartitionOP1A().getHeaderPartition().getPreface();
         GenericPackage genericPackage = preface.getContentStorage().getEssenceContainerDataList().get(0).getLinkedPackage();
@@ -673,27 +668,37 @@ final class IMFTrackFileReader
 
     public static void main(String[] args) throws IOException
     {
-
         if (args.length != 2)
         {
             logger.error(usage());
             throw new IllegalArgumentException("Invalid parameters");
         }
 
-        File inputFile = new File(args[0]);
-        if(!inputFile.exists()){
-            logger.error(String.format("File %s does not exist", inputFile.getAbsolutePath()));
-            System.exit(-1);
+        ResourceByteRangeProvider resourceByteRangeProvider;
+        String fileName;
+
+        if (args[0].startsWith("s3://")) {
+            AmazonS3URI uri = new AmazonS3URI(args[0]);
+            resourceByteRangeProvider = new S3ByteRangeProvider(uri);
+            fileName = new File(uri.getKey()).getName();
+        } else {
+            File inputFile = new File(args[0]);
+            if (!inputFile.exists()) {
+                logger.error(String.format("File %s does not exist", inputFile.getAbsolutePath()));
+                System.exit(-1);
+            }
+            resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
+            fileName = inputFile.getName();
         }
+
         File workingDirectory = new File(args[1]);
 
-        ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
         IMFTrackFileReader imfTrackFileReader = null;
         IMFTrackFileCPLBuilder imfTrackFileCPLBuilder = null;
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         try {
             imfTrackFileReader = new IMFTrackFileReader(workingDirectory, resourceByteRangeProvider);
-            imfTrackFileCPLBuilder = new IMFTrackFileCPLBuilder(workingDirectory, inputFile);
+            imfTrackFileCPLBuilder = new IMFTrackFileCPLBuilder(workingDirectory, fileName, resourceByteRangeProvider);
         }
         catch (IMFException | MXFException e){
             if(e instanceof IMFException){
