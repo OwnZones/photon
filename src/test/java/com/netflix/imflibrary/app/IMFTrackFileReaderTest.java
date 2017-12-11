@@ -19,11 +19,14 @@ package com.netflix.imflibrary.app;
 import com.netflix.imflibrary.IMFErrorLogger;
 import com.netflix.imflibrary.IMFErrorLoggerImpl;
 import com.netflix.imflibrary.exceptions.MXFException;
+import com.netflix.imflibrary.utils.S3ByteRangeProvider;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import testUtils.TestHelper;
 import com.netflix.imflibrary.utils.FileByteRangeProvider;
 import com.netflix.imflibrary.utils.ResourceByteRangeProvider;
+
+import com.amazonaws.services.s3.AmazonS3URI;
 
 import java.io.File;
 import java.io.IOException;
@@ -52,6 +55,18 @@ public class IMFTrackFileReaderTest
         ResourceByteRangeProvider resourceByteRangeProvider = mock(ResourceByteRangeProvider.class);
         when(resourceByteRangeProvider.getResourceSize()).thenReturn(16L);
         when(resourceByteRangeProvider.getByteRange(anyLong(), anyLong(), any(File.class))).thenReturn(inputFile);
+        IMFTrackFileReader imfTrackFileReader = new IMFTrackFileReader(workingDirectory, resourceByteRangeProvider);
+        IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
+        imfTrackFileReader.getRandomIndexPack(imfErrorLogger);
+    }
+
+    @Test
+    public void s3ByteRangeProvider() throws IOException
+    {
+        AmazonS3URI inputFileUri = new AmazonS3URI("s3://ownzones-deploy/zypline/test/TearsOfSteel_4k_Test_Master_Audio_002.mxf");
+
+        File workingDirectory = Files.createTempDirectory(null).toFile();
+        ResourceByteRangeProvider resourceByteRangeProvider = new S3ByteRangeProvider(inputFileUri);
         IMFTrackFileReader imfTrackFileReader = new IMFTrackFileReader(workingDirectory, resourceByteRangeProvider);
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         imfTrackFileReader.getRandomIndexPack(imfErrorLogger);
