@@ -135,7 +135,7 @@ public abstract class AbstractApplicationComposition implements ApplicationCompo
         Map<UUID, DOMNodeObjectModel> essenceDescriptorListMap= this.getEssenceDescriptorListMap(ignoreSet);
 
         imfErrorLogger.addAllErrors(IMFCoreConstraintsChecker.checkVirtualTracks(compositionPlaylistType, this
-                .virtualTrackMap, essenceDescriptorListMap));
+                .virtualTrackMap, essenceDescriptorListMap, this.regXMLLibDictionary));
 
         if ((compositionPlaylistType.getEssenceDescriptorList() == null) ||
                 (compositionPlaylistType.getEssenceDescriptorList().size() < 1)) {
@@ -954,6 +954,10 @@ public abstract class AbstractApplicationComposition implements ApplicationCompo
         //ignoreSet.add("EssenceLength");
         //ignoreSet.add("AlternativeCenterCuts");
         //ignoreSet.add("GroupOfSoundfieldGroupsLinkID");
+
+        // PHDRMetadataTrackSubDescriptor is not present in SMPTE registries and cannot be serialized
+        ignoreSet.add("PHDRMetadataTrackSubDescriptor");
+
         /**
          * The following check ensures that we have atleast one EssenceDescriptor in a TrackFile that equals the corresponding EssenceDescriptor element in the CPL's EDL
          */
