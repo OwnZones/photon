@@ -21,7 +21,7 @@ public class S3ByteRangeProvider implements ResourceByteRangeProvider {
     private AmazonS3URI resourceFileUri;
     private long fileSize;
 
-    private final String AwsS3VarName = "AWS_S3_ENDPOINT";
+    private static final String AwsS3VarName = "AWS_S3_ENDPOINT";
 
     /**
      * Constructor for a S3ByteRangeProvider
@@ -31,7 +31,7 @@ public class S3ByteRangeProvider implements ResourceByteRangeProvider {
     {
         this.resourceFileUri = resourceFileUri;
 
-        String awsEndpoint =  System.getenv(this.AwsS3VarName);
+        String awsEndpoint =  System.getenv(AwsS3VarName);
         if (awsEndpoint != null && awsEndpoint.length() > 0) {
             s3.setEndpoint(awsEndpoint);
             s3.setS3ClientOptions(S3ClientOptions.builder().setPathStyleAccess(true).build());
