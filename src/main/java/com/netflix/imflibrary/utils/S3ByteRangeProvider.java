@@ -3,6 +3,7 @@ import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3URI;
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.S3ClientOptions;
 import com.amazonaws.services.s3.model.*;
 import org.apache.commons.io.IOUtils;
 
@@ -20,6 +21,8 @@ public class S3ByteRangeProvider implements ResourceByteRangeProvider {
     private AmazonS3URI resourceFileUri;
     private long fileSize;
 
+    private final String AwsS3VarName = "AWS_S3_ENDPOINT";
+
     /**
      * Constructor for a S3ByteRangeProvider
      * @param resourceFileUri whose data will be read by this data provider
@@ -27,6 +30,12 @@ public class S3ByteRangeProvider implements ResourceByteRangeProvider {
     public S3ByteRangeProvider(AmazonS3URI resourceFileUri)
     {
         this.resourceFileUri = resourceFileUri;
+
+        String awsEndpoint =  System.getenv(this.AwsS3VarName);
+        if (awsEndpoint != null && awsEndpoint.length() > 0) {
+            s3.setEndpoint(awsEndpoint);
+            s3.setS3ClientOptions(S3ClientOptions.builder().setPathStyleAccess(true).build());
+        }
 
         ObjectMetadata metadata = s3.getObjectMetadata(this.resourceFileUri.getBucket(), this.resourceFileUri.getKey());
 
