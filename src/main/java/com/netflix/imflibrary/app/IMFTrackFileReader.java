@@ -27,12 +27,7 @@ import com.netflix.imflibrary.st0377.IndexTableSegment;
 import com.netflix.imflibrary.st0377.PartitionPack;
 import com.netflix.imflibrary.st0377.RandomIndexPack;
 import com.netflix.imflibrary.st0377.StructuralMetadataID;
-import com.netflix.imflibrary.st0377.header.EssenceContainerData;
-import com.netflix.imflibrary.st0377.header.FileDescriptor;
-import com.netflix.imflibrary.st0377.header.GenericPackage;
-import com.netflix.imflibrary.st0377.header.InterchangeObject;
-import com.netflix.imflibrary.st0377.header.Preface;
-import com.netflix.imflibrary.st0377.header.SourcePackage;
+import com.netflix.imflibrary.st0377.header.*;
 import com.netflix.imflibrary.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -711,6 +706,7 @@ public final class IMFTrackFileReader
             }
             imfErrorLogger.addAllErrors(imfErrorLogger.getErrors());
         }
+
         Set<HeaderPartition.EssenceTypeEnum> supportedEssenceComponentTypes = new HashSet<>();
         supportedEssenceComponentTypes.add(HeaderPartition.EssenceTypeEnum.MainImageEssence);
         supportedEssenceComponentTypes.add(HeaderPartition.EssenceTypeEnum.MainAudioEssence);
@@ -719,6 +715,14 @@ public final class IMFTrackFileReader
                 && imfTrackFileCPLBuilder != null
                 && supportedEssenceComponentTypes.contains(imfTrackFileReader.getEssenceType(imfErrorLogger))) {
             try {
+                HeaderPartition headerPartition = imfTrackFileReader.headerPartition.getHeaderPartitionOP1A().getHeaderPartition();
+                List<InterchangeObject.InterchangeObjectBO> subDescriptors = headerPartition.getSubDescriptors();
+                for (InterchangeObject.InterchangeObjectBO subDescriptor : subDescriptors) {
+                    if (subDescriptor instanceof PHDRMetaDataTrackSubDescriptor.PHDRMetaDataTrackSubDescriptorBO) {
+                        logger.info("Found a PHDRMetaDataTrackSubDescriptor with instanceID: " + UUIDHelper.fromUUID(UUID.nameUUIDFromBytes(subDescriptor.getInstanceUID().getUID())));
+                    }
+                }
+
                 for (InterchangeObject.InterchangeObjectBO essenceDescriptor : imfTrackFileReader.getEssenceDescriptors(imfErrorLogger)) {
                 /* create dom */
                     DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
