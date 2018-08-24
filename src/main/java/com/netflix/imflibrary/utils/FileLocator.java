@@ -18,9 +18,6 @@
 
 package com.netflix.imflibrary.utils;
 
-import sun.misc.IOUtils;
-
-import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,7 +27,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
 /**
- * This interface is the supertype for classes representing an file locator
+ * This interface is the supertype for classes representing an file locator across different storage facilities.
  */
 public interface FileLocator
 {
@@ -60,6 +57,9 @@ public interface FileLocator
         return new LocalFileLocator(location);
     }
 
+    /**
+     * Copies all bytes from a file denoted by a file locator to a target file
+     */
     public static Path copy(FileLocator fileLocator, Path outputFilePath) throws IOException {
         InputStream inputStream = fileLocator.getInputStream();
 
@@ -74,29 +74,61 @@ public interface FileLocator
     }
 
     /**
-     * Tests whether the file denoted by this abstract pathname is a
-     * directory.
-     * @return <code>true</code> if and only if the file denoted by this
-     *          abstract pathname exists <em>and</em> is a directory;
-     *          <code>false</code> otherwise
-    */
+     * Tests whether the file locator represents a directory.
+     */
     public boolean isDirectory() throws IOException;
 
+    /**
+     * Return the absolute pathname string denoting the same file or
+     * directory as this abstract pathname
+     */
     public String getAbsolutePath() throws IOException;
 
+    /**
+     * Returns an array of abstract pathnames denoting the files in the
+     * directory denoted by this abstract pathname.
+     */
     public FileLocator[] listFiles(FilenameFilter filenameFilter) throws IOException;
 
+    /**
+     * Constructs a <tt>file:</tt> URI that represents this abstract pathname.
+     */
     public URI toURI() throws IOException;
 
+    /**
+     * Tests whether the file or directory denoted by this abstract pathname
+     * exists.
+     */
     public boolean exists() throws IOException;
 
+    /**
+     * Returns the name of the file or directory denoted by this abstract
+     * pathname.  This is just the last name in the pathname's name
+     * sequence.  If the pathname's name sequence is empty, then the empty
+     * string is returned.
+     */
     public String getName() throws IOException;
 
+    /**
+     * Converts this abstract pathname into a pathname string.  The resulting
+     * string uses the {@link #separator default name-separator character} to
+     * separate the names in the name sequence.
+     */
     public String getPath() throws IOException;
 
+    /**
+     * Returns the length of the file denoted by this abstract pathname.
+     * The return value is unspecified if this pathname denotes a directory.
+     */
     public long length() throws IOException;
 
+    /**
+     *
+     */
     public InputStream getInputStream() throws IOException;
 
+    /**
+     *
+     */
     public ResourceByteRangeProvider getResourceByteRangeProvider();
 }

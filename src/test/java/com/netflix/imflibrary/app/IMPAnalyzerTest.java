@@ -1,6 +1,7 @@
 package com.netflix.imflibrary.app;
 
 import com.netflix.imflibrary.utils.ErrorLogger;
+import com.netflix.imflibrary.utils.FileLocator;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import testUtils.TestHelper;
@@ -19,7 +20,9 @@ public class IMPAnalyzerTest
     public void IMPAnalyzerTest() throws IOException
     {
         File inputFile = TestHelper.findResourceByPath("TestIMP/MERIDIAN_Netflix_Photon_161006/");
-        Map<String, List<ErrorLogger.ErrorObject>> errorMap = analyzePackage(inputFile);
+        Map<String, List<ErrorLogger.ErrorObject>> errorMap = analyzePackage(
+                FileLocator.fromLocation(inputFile.toURI())
+        );
         Assert.assertEquals(errorMap.size(), 7);
         errorMap.entrySet().stream().forEach( e ->
                 {

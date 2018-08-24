@@ -18,6 +18,7 @@ package com.netflix.imflibrary.app;
 
 import com.netflix.imflibrary.IMFErrorLogger;
 import com.netflix.imflibrary.IMFErrorLoggerImpl;
+import com.netflix.imflibrary.utils.FileLocator;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -34,7 +35,10 @@ public class IMFTrackFileCPLBuilderTests {
     {
         File inputFile = TestHelper.findResourceByPath("TearsOfSteel_4k_Test_Master_Audio_002.mxf");
         File workingDirectory = Files.createTempDirectory(null).toFile();
-        IMFTrackFileCPLBuilder imfTrackFileCPLBuilder = new IMFTrackFileCPLBuilder(workingDirectory, inputFile);
+        IMFTrackFileCPLBuilder imfTrackFileCPLBuilder = new IMFTrackFileCPLBuilder(
+                workingDirectory,
+                FileLocator.fromLocation(inputFile.toURI())
+        );
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         Assert.assertTrue(imfTrackFileCPLBuilder.getCompositionPlaylist(imfErrorLogger).length() > 0);
     }
