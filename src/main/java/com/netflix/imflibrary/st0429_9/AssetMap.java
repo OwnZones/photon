@@ -97,12 +97,12 @@ public final class AssetMap
     }
     /**
      * Constructor for an {@link com.netflix.imflibrary.st0429_9.AssetMap AssetMap} object from an XML file that contains an AssetMap document
-     * @param assetMapXmlFile the input XML file
+     * @param assetMapXmlFileLocator the input XML file locator
      * @throws IOException - any I/O related error is exposed through an IOException
      */
-    public AssetMap(FileLocator assetMapXmlFile) throws IOException
+    public AssetMap(FileLocator assetMapXmlFileLocator) throws IOException
     {
-        this(getFileAsResourceByteRangeProvider(assetMapXmlFile));
+        this(getFileAsResourceByteRangeProvider(assetMapXmlFileLocator));
     }
 
     /**

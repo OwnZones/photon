@@ -18,10 +18,16 @@
 
 package com.netflix.imflibrary.utils;
 
+import sun.misc.IOUtils;
+
+import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 /**
  * This interface is the supertype for classes representing an file locator
@@ -52,6 +58,19 @@ public interface FileLocator
         }
 
         return new LocalFileLocator(location);
+    }
+
+    public static Path copy(FileLocator fileLocator, Path outputFilePath) throws IOException {
+        InputStream inputStream = fileLocator.getInputStream();
+
+        Files.copy(
+                inputStream,
+                outputFilePath,
+                StandardCopyOption.REPLACE_EXISTING);
+
+        inputStream.close();
+
+        return outputFilePath;
     }
 
     /**

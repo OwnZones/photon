@@ -23,7 +23,6 @@ import com.netflix.imflibrary.st0429_9.AssetMap;
 import com.netflix.imflibrary.st0429_9.BasicMapProfileV2FileSet;
 import com.netflix.imflibrary.st0429_9.BasicMapProfileV2MappedFileSet;
 import com.netflix.imflibrary.utils.FileLocator;
-import com.netflix.imflibrary.utils.S3FileLocator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
@@ -31,7 +30,6 @@ import org.xml.sax.SAXException;
 import javax.annotation.concurrent.Immutable;
 import javax.xml.bind.JAXBException;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -66,7 +64,7 @@ public final class IMPDelivery
         for (AssetMap.Asset packingListAsset : packingListAssets)
         {
             URI absolutePackingListURI = basicMapProfileV2FileSet.getAbsoluteAssetMapURI().resolve(packingListAsset.getPath());
-            PackingList packingList = new PackingList(new S3FileLocator(absolutePackingListURI));
+            PackingList packingList = new PackingList(FileLocator.fromLocation(absolutePackingListURI));
 
             List<IMPAsset> referencedAssets = new ArrayList<>();
             for (PackingList.Asset referencedAsset : packingList.getAssets())

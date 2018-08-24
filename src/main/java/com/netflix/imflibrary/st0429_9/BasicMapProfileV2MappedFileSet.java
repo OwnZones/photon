@@ -50,15 +50,16 @@ public final class BasicMapProfileV2MappedFileSet
     private final IMFErrorLogger imfErrorLogger;
     /**
      * Constructor for a MappedFileSet object from a file representing the root of a directory tree
-     * @param fileLocator the directory which serves as the tree root of the Mapped File Set
+     * @param rootFileLocator the directory which serves as the tree root of the Mapped File Set
+     * @throws IOException - forwarded from {@link AssetMap#AssetMap(FileLocator) AssetMap} constructor
      */
-    public BasicMapProfileV2MappedFileSet(FileLocator fileLocator) throws IOException
+    public BasicMapProfileV2MappedFileSet(FileLocator rootFileLocator) throws IOException
     {
         imfErrorLogger = new IMFErrorLoggerImpl();
-        if (!fileLocator.isDirectory())
+        if (!rootFileLocator.isDirectory())
         {
             String message = String.format("Root file %s corresponding to the mapped file set is not a " +
-                    "directory", fileLocator.getAbsolutePath());
+                    "directory", rootFileLocator.getAbsolutePath());
             imfErrorLogger.addError(IMFErrorLogger.IMFErrors.ErrorCodes.IMF_AM_ERROR, IMFErrorLogger.IMFErrors
                     .ErrorLevels.FATAL,
                     message);
@@ -74,12 +75,12 @@ public final class BasicMapProfileV2MappedFileSet
             }
         };
 
-        FileLocator[] files = fileLocator.listFiles(filenameFilter);
+        FileLocator[] files = rootFileLocator.listFiles(filenameFilter);
         if ((files == null) || (files.length != 1))
         {
             String message = String.format("Found %d files with name %s in mapped file set rooted at %s, " +
                     "exactly 1 is allowed", (files == null) ? 0 : files.length, BasicMapProfileV2MappedFileSet
-                    .ASSETMAP_FILE_NAME, fileLocator.getAbsolutePath());
+                    .ASSETMAP_FILE_NAME, rootFileLocator.getAbsolutePath());
             imfErrorLogger.addError(IMFErrorLogger.IMFErrors.ErrorCodes.IMF_AM_ERROR, IMFErrorLogger.IMFErrors
                             .ErrorLevels.FATAL,
                     message);

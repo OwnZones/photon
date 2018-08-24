@@ -177,18 +177,18 @@ public class IMPFixer {
 
     }
 
-    public static List<ErrorLogger.ErrorObject> analyzePackageAndWrite(FileLocator fileLocator, File targetFile, String versionCPLSchema, Boolean copyTrackfile, Boolean generateHash) throws
+    public static List<ErrorLogger.ErrorObject> analyzePackageAndWrite(FileLocator rootFileLocator, File targetFile, String versionCPLSchema, Boolean copyTrackfile, Boolean generateHash) throws
             IOException, ParserConfigurationException, SAXException, JAXBException, URISyntaxException, NoSuchAlgorithmException {
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         List<PayloadRecord> headerPartitionPayloadRecords = new ArrayList<>();
-        BasicMapProfileV2MappedFileSet mapProfileV2MappedFileSet = new BasicMapProfileV2MappedFileSet(fileLocator);
+        BasicMapProfileV2MappedFileSet mapProfileV2MappedFileSet = new BasicMapProfileV2MappedFileSet(rootFileLocator);
         AssetMap assetMap = new AssetMap(new S3FileLocator(mapProfileV2MappedFileSet.getAbsoluteAssetMapURI()));
         for (AssetMap.Asset packingListAsset : assetMap.getPackingListAssets()) {
-            PackingList packingList = new PackingList(new S3FileLocator(fileLocator.getAbsolutePath() + packingListAsset.getPath().toString()));
+            PackingList packingList = new PackingList(FileLocator.fromLocation(rootFileLocator, packingListAsset.getPath().toString()));
             Map<UUID, IMPBuilder.IMFTrackFileMetadata> imfTrackFileMetadataMap = new HashMap<>();
 
             for (PackingList.Asset asset : packingList.getAssets()) {
-                FileLocator assetFile = new S3FileLocator(fileLocator.getAbsolutePath() + assetMap.getPath(asset.getUUID()).toString());
+                FileLocator assetFile = FileLocator.fromLocation(rootFileLocator,assetMap.getPath(asset.getUUID()).toString());
                 ResourceByteRangeProvider resourceByteRangeProvider = assetFile.getResourceByteRangeProvider();
 
                 if (asset.getType().equals(PackingList.Asset.APPLICATION_MXF_TYPE)) {
@@ -208,7 +208,7 @@ public class IMPFixer {
                     );
                     if(copyTrackfile) {
                         File outputFile = new File(targetFile.toString() + File.separator + assetFile.getName());
-//                        Files.copy(assetFile.toPath(), outputFile.toPath(), REPLACE_EXISTING);
+                        FileLocator.copy(assetFile, outputFile.toPath());
                     }
                 }
             }
@@ -218,7 +218,7 @@ public class IMPFixer {
 
 
             for (PackingList.Asset asset : packingList.getAssets()) {
-                FileLocator assetFile = new S3FileLocator(fileLocator.getAbsolutePath() + assetMap.getPath(asset.getUUID()).toString());
+                FileLocator assetFile = FileLocator.fromLocation(rootFileLocator, assetMap.getPath(asset.getUUID()).toString());
                 ResourceByteRangeProvider resourceByteRangeProvider = assetFile.getResourceByteRangeProvider();
                 if (asset.getType().equals(PackingList.Asset.TEXT_XML_TYPE) && ApplicationComposition.isCompositionPlaylist(resourceByteRangeProvider)) {
                     ApplicationComposition applicationComposition = ApplicationCompositionFactory.getApplicationComposition(resourceByteRangeProvider, new IMFErrorLoggerImpl());
@@ -313,9 +313,9 @@ public class IMPFixer {
         }
 
         String inputFileName = args[0];
-        File inputFile = new File(inputFileName);
-        if (!inputFile.exists()) {
-            logger.error(String.format("File %s does not exist", inputFile.getAbsolutePath()));
+        FileLocator inputFileLocator = FileLocator.fromLocation(inputFileName);
+        if (!inputFileLocator.exists()) {
+            logger.error(String.format("File %s does not exist", inputFileLocator.getAbsolutePath()));
             System.exit(-1);
         }
 
@@ -354,13 +354,13 @@ public class IMPFixer {
             }
         }
 
-        if (!inputFile.exists() || !inputFile.isDirectory()) {
+        if (!inputFileLocator.exists() || !inputFileLocator.isDirectory()) {
             logger.error(String.format("Invalid input package path"));
             System.exit(-1);
         }
         else
         {
-            List<ErrorLogger.ErrorObject> errors = analyzePackageAndWrite(new S3FileLocator("s3://"), outputFile, versionCPLSchema, copyTrackFile, generateHash);
+            List<ErrorLogger.ErrorObject> errors = analyzePackageAndWrite(inputFileLocator, outputFile, versionCPLSchema, copyTrackFile, generateHash);
             if (errors.size() > 0) {
                 logger.info(String.format("IMPWriter encountered errors:"));
                 for (ErrorLogger.ErrorObject errorObject : errors) {

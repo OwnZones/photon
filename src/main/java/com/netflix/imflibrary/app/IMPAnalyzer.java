@@ -230,23 +230,24 @@ public class IMPAnalyzer {
         return imfErrorLogger.getErrors();
     }
 
-    public static Map<String, List<ErrorLogger.ErrorObject>> analyzePackage(FileLocator fileLocator) throws IOException {
+    public static Map<String, List<ErrorLogger.ErrorObject>> analyzePackage(FileLocator rootFileLocator) throws IOException {
         Map<String, List<ErrorLogger.ErrorObject>> errorMap = new HashMap<>();
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         List<PayloadRecord> headerPartitionPayloadRecords = new ArrayList<>();
         try {
-            BasicMapProfileV2MappedFileSet mapProfileV2MappedFileSet = new BasicMapProfileV2MappedFileSet(fileLocator);
+            BasicMapProfileV2MappedFileSet mapProfileV2MappedFileSet = new BasicMapProfileV2MappedFileSet(rootFileLocator);
             imfErrorLogger.addAllErrors(mapProfileV2MappedFileSet.getErrors());
             IMFErrorLogger assetMapErrorLogger = new IMFErrorLoggerImpl();
 
             try {
+
                 AssetMap assetMap = new AssetMap(FileLocator.fromLocation(mapProfileV2MappedFileSet.getAbsoluteAssetMapURI()));
                 assetMapErrorLogger.addAllErrors(assetMap.getErrors());
 
                 for (AssetMap.Asset packingListAsset : assetMap.getPackingListAssets()) {
                     IMFErrorLogger packingListErrorLogger = new IMFErrorLoggerImpl();
                     try {
-                        PackingList packingList = new PackingList(FileLocator.fromLocation(fileLocator, packingListAsset.getPath().toString()));
+                        PackingList packingList = new PackingList(FileLocator.fromLocation(rootFileLocator, packingListAsset.getPath().toString()));
                         packingListErrorLogger.addAllErrors(packingList.getErrors());
 
                         for (PackingList.Asset asset : packingList.getAssets()) {
@@ -257,7 +258,7 @@ public class IMPAnalyzer {
                                             IMFErrorLogger.IMFErrors.ErrorLevels.FATAL, String.format("Failed to get path for Asset with ID = %s", asset.getUUID().toString()));
                                     continue;
                                 }
-                                FileLocator assetFile = FileLocator.fromLocation(fileLocator, assetMap.getPath(asset.getUUID()).toString());
+                                FileLocator assetFile = FileLocator.fromLocation(rootFileLocator, assetMap.getPath(asset.getUUID()).toString());
 
                                 if(!assetFile.exists()) {
                                     packingListErrorLogger.addError(IMFErrorLogger.IMFErrors.ErrorCodes.IMF_PKL_ERROR,
@@ -295,9 +296,9 @@ public class IMPAnalyzer {
                             }
                         }
 
-                        List<ApplicationComposition> applicationCompositionList = analyzeApplicationCompositions( fileLocator, assetMap, packingList, headerPartitionPayloadRecords, packingListErrorLogger, errorMap);
+                        List<ApplicationComposition> applicationCompositionList = analyzeApplicationCompositions( rootFileLocator, assetMap, packingList, headerPartitionPayloadRecords, packingListErrorLogger, errorMap);
 
-                        analyzeOutputProfileLists( fileLocator, assetMap, packingList, applicationCompositionList, packingListErrorLogger, errorMap);
+                        analyzeOutputProfileLists( rootFileLocator, assetMap, packingList, applicationCompositionList, packingListErrorLogger, errorMap);
 
                     } catch (IMFException e) {
                         packingListErrorLogger.addAllErrors(e.getErrors());
@@ -314,7 +315,7 @@ public class IMPAnalyzer {
             }
         } catch (IMFException e) {
             imfErrorLogger.addAllErrors(e.getErrors());
-            errorMap.put(fileLocator.getName(), imfErrorLogger.getErrors());
+            errorMap.put(rootFileLocator.getName(), imfErrorLogger.getErrors());
         }
 
         return errorMap;
@@ -344,7 +345,7 @@ public class IMPAnalyzer {
         return trackFileErrorLogger.getErrors();
     }
 
-    public static List<OutputProfileList> analyzeOutputProfileLists(FileLocator fileLocator,
+    public static List<OutputProfileList> analyzeOutputProfileLists(FileLocator rootFileLocator,
                                                                     AssetMap assetMap,
                                                                     PackingList packingList,
                                                                     List<ApplicationComposition> applicationCompositionList,
@@ -361,7 +362,7 @@ public class IMPAnalyzer {
                             IMFErrorLogger.IMFErrors.ErrorLevels.FATAL, String.format("Failed to get path for Asset with ID = %s", asset.getUUID().toString()));
                     continue;
                 }
-                FileLocator assetFile = FileLocator.fromLocation(fileLocator, assetMap.getPath(asset.getUUID()).toString());
+                FileLocator assetFile = FileLocator.fromLocation(rootFileLocator, assetMap.getPath(asset.getUUID()).toString());
 
                 if(!assetFile.exists()) {
                     packingListErrorLogger.addError(IMFErrorLogger.IMFErrors.ErrorCodes.IMF_PKL_ERROR,
@@ -402,7 +403,7 @@ public class IMPAnalyzer {
    }
 
 
-    public static List<ApplicationComposition> analyzeApplicationCompositions( FileLocator rootFile,
+    public static List<ApplicationComposition> analyzeApplicationCompositions( FileLocator rootFileLocator,
                                                   AssetMap assetMap,
                                                   PackingList packingList,
                                                   List<PayloadRecord> headerPartitionPayloadRecords,
@@ -422,7 +423,7 @@ public class IMPAnalyzer {
                             IMFErrorLogger.IMFErrors.ErrorLevels.FATAL, String.format("Failed to get path for Asset with ID = %s", asset.getUUID().toString()));
                     continue;
                 }
-                FileLocator assetFile = FileLocator.fromLocation(rootFile, assetMap.getPath(asset.getUUID()).toString());
+                FileLocator assetFile = FileLocator.fromLocation(rootFileLocator, assetMap.getPath(asset.getUUID()).toString());
 
                 if(!assetFile.exists()) {
                     packingListErrorLogger.addError(IMFErrorLogger.IMFErrors.ErrorCodes.IMF_PKL_ERROR,

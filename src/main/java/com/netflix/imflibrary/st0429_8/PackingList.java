@@ -96,11 +96,11 @@ public final class PackingList
 
     /**
      * Constructor for a {@link com.netflix.imflibrary.st0429_8.PackingList PackingList} object that corresponds to a PackingList XML document
-     * @param packingListXMLFile the input XML file
+     * @param packingListXMLFileLocator the input XML file locator
      * @throws IOException - any I/O related error is exposed through an IOException
      */
-    public PackingList(FileLocator packingListXMLFile) throws IOException {
-        this(packingListXMLFile.getResourceByteRangeProvider());
+    public PackingList(FileLocator packingListXMLFileLocator) throws IOException {
+        this(packingListXMLFileLocator.getResourceByteRangeProvider());
     }
 
     /**
