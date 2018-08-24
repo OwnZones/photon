@@ -19,6 +19,7 @@
 package com.netflix.imflibrary.writerTools.utils;
 
 import com.netflix.imflibrary.exceptions.IMFException;
+import com.netflix.imflibrary.utils.FileLocator;
 import com.netflix.imflibrary.utils.FileByteRangeProvider;
 import com.netflix.imflibrary.utils.ResourceByteRangeProvider;
 import org.smpte_ra.schemas.st2067_2_2013.BaseResourceType;
@@ -30,10 +31,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -114,12 +112,27 @@ public class IMFUtils {
     /**
      * A method that generates a SHA-1 hash of the file and Base64 encode the result.
      *
-     * @param file - the file whose SHA-1 hash is to be generated
+     * @param fileLocator - the file locator whose SHA-1 hash is to be generated
      * @return a byte[] representing the generated base64 encoded hash of the file
      * @throws IOException - any I/O related error will be exposed through an IOException
      */
-    public static byte[] generateSHA1HashAndBase64Encode(File file) throws IOException {
-        return generateBase64Encode(generateSHA1Hash(file));
+    public static byte[] generateSHA1HashAndBase64Encode(FileLocator fileLocator) throws IOException {
+        try {
+            MessageDigest messageDigest = MessageDigest.getInstance("SHA1");
+            InputStream fileInputStream = fileLocator.getInputStream();
+            byte[] bytes = new byte[1024];
+            int bytesRead = 0;
+            while((bytesRead = fileInputStream.read(bytes)) != -1){
+                messageDigest.update(bytes, 0, bytesRead);
+            }
+            byte[] digest = messageDigest.digest();
+            byte[] base64EncodedDigest = Base64.getEncoder().encodeToString(digest).getBytes("UTF-8");
+            fileInputStream.close();
+            return base64EncodedDigest;
+        }
+        catch (NoSuchAlgorithmException | FileNotFoundException e){
+            throw new IMFException(e);
+        }
     }
 
     /**

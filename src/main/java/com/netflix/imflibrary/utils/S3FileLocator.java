@@ -1,20 +1,14 @@
 package com.netflix.imflibrary.utils;
 
-import com.amazonaws.auth.AWSCredentialsProviderChain;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
-import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
-import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.AmazonS3URI;
-import com.amazonaws.services.s3.model.ListObjectsV2Request;
-import com.amazonaws.services.s3.model.ListObjectsV2Result;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.s3.model.*;
 
-import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -24,6 +18,7 @@ public class S3FileLocator implements FileLocator {
 
     private String bucket;
     private String key;
+    private long length = 0;
 
     public S3FileLocator(String url) {
         AmazonS3URI s3URI = new AmazonS3URI(url);
@@ -50,15 +45,6 @@ public class S3FileLocator implements FileLocator {
         for (S3FileLocator fl : fileLocator.listFiles(null)) {
             System.out.println(fl.toURI());
         }
-        System.out.println("dsada");
-    }
-
-    public String getBucket() {
-        return this.bucket;
-    }
-
-    public String getKey() {
-        return this.key;
     }
 
     public URI toURI() throws IOException {
@@ -75,6 +61,21 @@ public class S3FileLocator implements FileLocator {
 
     public String getPath() {
         return this.getAbsolutePath();
+    }
+
+    public long length() {
+        if (this.length != 0) {
+            return this.length;
+        }
+
+        ObjectMetadata metadata = s3Client.getObjectMetadata(this.bucket, this.key);
+        this.length = metadata.getContentLength();
+        return this.length;
+    }
+
+    public InputStream getInputStream() throws IOException {
+        S3Object s3Object = s3Client.getObject(this.bucket, this.key);
+        return s3Object.getObjectContent();
     }
 
     public ResourceByteRangeProvider getResourceByteRangeProvider() {

@@ -1,8 +1,6 @@
 package com.netflix.imflibrary.utils;
 
-import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
 import java.util.ArrayList;
 
@@ -62,6 +60,14 @@ public class LocalFileLocator implements FileLocator {
 
     public String getPath() throws IOException {
         return this.file.getPath();
+    }
+
+    public InputStream getInputStream() throws IOException {
+        return new FileInputStream(this.file);
+    }
+
+    public long length() {
+        return this.file.length();
     }
 
     public ResourceByteRangeProvider getResourceByteRangeProvider() {

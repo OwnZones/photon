@@ -14,14 +14,7 @@ import com.netflix.imflibrary.st2067_2.Composition;
 import com.netflix.imflibrary.st2067_2.IMFEssenceComponentVirtualTrack;
 import com.netflix.imflibrary.st2067_2.IMFEssenceDescriptorBaseType;
 import com.netflix.imflibrary.st2067_2.IMFTrackFileResourceType;
-import com.netflix.imflibrary.utils.ByteArrayByteRangeProvider;
-import com.netflix.imflibrary.utils.ByteArrayDataProvider;
-import com.netflix.imflibrary.utils.ByteProvider;
-import com.netflix.imflibrary.utils.ErrorLogger;
-import com.netflix.imflibrary.utils.RegXMLLibHelper;
-import com.netflix.imflibrary.utils.ResourceByteRangeProvider;
-import com.netflix.imflibrary.utils.UUIDHelper;
-import com.netflix.imflibrary.utils.Utilities;
+import com.netflix.imflibrary.utils.*;
 import com.netflix.imflibrary.writerTools.utils.IMFUUIDGenerator;
 import com.netflix.imflibrary.writerTools.utils.IMFUtils;
 import com.sandflow.smpte.klv.Triplet;
@@ -191,7 +184,7 @@ public class IMPBuilder {
         }
         numErrors = (imfErrorLogger.getNumberOfErrors() > 0) ? imfErrorLogger.getNumberOfErrors()-1 : 0;
 
-        File cplFile = new File(workingDirectory + File.separator + compositionPlaylistBuilder_2013.getCPLFileName());
+        FileLocator cplFile = FileLocator.fromLocation(workingDirectory + File.separator + compositionPlaylistBuilder_2013.getCPLFileName());
         if(!cplFile.exists()){
             throw new IMFAuthoringException(String.format("CompositionPlaylist file does not exist in the working directory %s, cannot generate the rest of the documents", workingDirectory.getAbsolutePath()));
         }
@@ -430,7 +423,7 @@ public class IMPBuilder {
         }
         numErrors = (imfErrorLogger.getNumberOfErrors() > 0) ? imfErrorLogger.getNumberOfErrors()-1 : 0;
 
-        File cplFile = new File(workingDirectory + File.separator + compositionPlaylistBuilder_2016.getCPLFileName());
+        FileLocator cplFile = FileLocator.fromLocation(workingDirectory + File.separator + compositionPlaylistBuilder_2016.getCPLFileName());
         if(!cplFile.exists()){
             throw new IMFAuthoringException(String.format("CompositionPlaylist file does not exist in the working directory %s, cannot generate the rest of the documents", workingDirectory.getAbsolutePath()));
         }

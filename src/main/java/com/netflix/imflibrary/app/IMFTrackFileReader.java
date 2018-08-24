@@ -32,13 +32,7 @@ import com.netflix.imflibrary.st0377.header.GenericPackage;
 import com.netflix.imflibrary.st0377.header.InterchangeObject;
 import com.netflix.imflibrary.st0377.header.Preface;
 import com.netflix.imflibrary.st0377.header.SourcePackage;
-import com.netflix.imflibrary.utils.ByteArrayDataProvider;
-import com.netflix.imflibrary.utils.ByteProvider;
-import com.netflix.imflibrary.utils.ErrorLogger;
-import com.netflix.imflibrary.utils.FileByteRangeProvider;
-import com.netflix.imflibrary.utils.FileDataProvider;
-import com.netflix.imflibrary.utils.ResourceByteRangeProvider;
-import com.netflix.imflibrary.utils.Utilities;
+import com.netflix.imflibrary.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -681,20 +675,20 @@ final class IMFTrackFileReader
             throw new IllegalArgumentException("Invalid parameters");
         }
 
-        File inputFile = new File(args[0]);
-        if(!inputFile.exists()){
-            logger.error(String.format("File %s does not exist", inputFile.getAbsolutePath()));
+        FileLocator inputFileLocator = FileLocator.fromLocation(args[0]);
+        if(!inputFileLocator.exists()){
+            logger.error(String.format("File %s does not exist", inputFileLocator.getAbsolutePath()));
             System.exit(-1);
         }
         File workingDirectory = new File(args[1]);
 
-        ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
+        ResourceByteRangeProvider resourceByteRangeProvider = inputFileLocator.getResourceByteRangeProvider();
         IMFTrackFileReader imfTrackFileReader = null;
         IMFTrackFileCPLBuilder imfTrackFileCPLBuilder = null;
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         try {
             imfTrackFileReader = new IMFTrackFileReader(workingDirectory, resourceByteRangeProvider);
-            imfTrackFileCPLBuilder = new IMFTrackFileCPLBuilder(workingDirectory, inputFile);
+            imfTrackFileCPLBuilder = new IMFTrackFileCPLBuilder(workingDirectory, inputFileLocator);
         }
         catch (IMFException | MXFException e){
             if(e instanceof IMFException){

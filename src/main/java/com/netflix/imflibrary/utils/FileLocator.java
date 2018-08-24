@@ -18,9 +18,9 @@
 
 package com.netflix.imflibrary.utils;
 
-import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 
 /**
@@ -74,6 +74,10 @@ public interface FileLocator
     public String getName() throws IOException;
 
     public String getPath() throws IOException;
+
+    public long length() throws IOException;
+
+    public InputStream getInputStream() throws IOException;
 
     public ResourceByteRangeProvider getResourceByteRangeProvider();
 }
