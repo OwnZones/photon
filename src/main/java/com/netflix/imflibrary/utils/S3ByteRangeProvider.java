@@ -4,6 +4,7 @@ import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3URI;
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.S3ClientOptions;
 import com.amazonaws.services.s3.model.*;
 import com.amazonaws.util.IOUtils;
 
@@ -25,6 +26,12 @@ public class S3ByteRangeProvider implements ResourceByteRangeProvider {
     public S3ByteRangeProvider(FileLocator fileLocator)
     {
         try {
+            String awsEndpoint =  System.getenv("AWS_S3_ENDPOINT");
+            if (awsEndpoint != null && awsEndpoint.length() > 0) {
+                s3Client.setEndpoint(awsEndpoint);
+                s3Client.setS3ClientOptions(S3ClientOptions.builder().setPathStyleAccess(true).build());
+            }
+
             this.s3Uri = new AmazonS3URI(fileLocator.toURI());
             ObjectMetadata metadata = s3Client.getObjectMetadata(this.s3Uri.getBucket(), this.s3Uri.getKey());
 
