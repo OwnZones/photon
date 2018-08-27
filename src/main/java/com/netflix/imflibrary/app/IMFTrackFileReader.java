@@ -51,7 +51,7 @@ import java.util.*;
  * A simple application to exercise the core logic of Photon for reading and validating IMF Track files.
  */
 @ThreadSafe
-final class IMFTrackFileReader
+final public class IMFTrackFileReader
 {
     private final File workingDirectory;
     private final ResourceByteRangeProvider resourceByteRangeProvider;
@@ -69,10 +69,16 @@ final class IMFTrackFileReader
      * @param workingDirectory the working directory
      * @param resourceByteRangeProvider the MXF file represented as a {@link com.netflix.imflibrary.utils.ResourceByteRangeProvider}
      */
-    IMFTrackFileReader(File workingDirectory, ResourceByteRangeProvider resourceByteRangeProvider)
+    public IMFTrackFileReader(File workingDirectory, ResourceByteRangeProvider resourceByteRangeProvider)
     {
         this.workingDirectory = workingDirectory;
         this.resourceByteRangeProvider = resourceByteRangeProvider;
+    }
+
+    public IMFTrackFileReader(String inputFilePath, String workingDirectoryPath)
+    {
+        this.workingDirectory = new File(workingDirectoryPath);
+        this.resourceByteRangeProvider = FileLocator.fromLocation(inputFilePath).getResourceByteRangeProvider();
     }
 
     private IMFConstraints.HeaderPartitionIMF getHeaderPartitionIMF(@Nonnull IMFErrorLogger imfErrorLogger) throws IOException
@@ -582,7 +588,7 @@ final class IMFTrackFileReader
      * @param imfErrorLogger an error logger for recording any errors - cannot be null
      * @return editRate of the essence as a List of Long Integers
      */
-    List<Long> getEssenceEditRateAsList(@Nonnull IMFErrorLogger imfErrorLogger) throws IOException {
+    public List<Long> getEssenceEditRateAsList(@Nonnull IMFErrorLogger imfErrorLogger) throws IOException {
         if(!(this.getHeaderPartition(imfErrorLogger).getEssenceDescriptors().size() > 0)){
             throw new MXFException(String.format("No EssenceDescriptors were found in the MXF essence"));
         }
@@ -595,7 +601,7 @@ final class IMFTrackFileReader
      * @param imfErrorLogger an error logger for recording any errors - cannot be null
      * @return essenceDuration
      */
-    BigInteger getEssenceDuration(@Nonnull IMFErrorLogger imfErrorLogger) throws IOException {
+    public BigInteger getEssenceDuration(@Nonnull IMFErrorLogger imfErrorLogger) throws IOException {
         return this.getHeaderPartition(imfErrorLogger).getEssenceDuration();
     }
 
@@ -603,7 +609,7 @@ final class IMFTrackFileReader
      * A method to return the TrackFileId which is a UUID identifying the track file
      * @return UUID identifying the Track File
      */
-    UUID getTrackFileId(){
+    public UUID getTrackFileId(){
 
         Preface preface = this.headerPartition.getHeaderPartitionOP1A().getHeaderPartition().getPreface();
         GenericPackage genericPackage = preface.getContentStorage().getEssenceContainerDataList().get(0).getLinkedPackage();
@@ -682,7 +688,7 @@ final class IMFTrackFileReader
         IMFTrackFileCPLBuilder imfTrackFileCPLBuilder = null;
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         try {
-            imfTrackFileReader = new IMFTrackFileReader(workingDirectory, resourceByteRangeProvider);
+            imfTrackFileReader = new IMFTrackFileReader(args[0], args[1]);
             imfTrackFileCPLBuilder = new IMFTrackFileCPLBuilder(workingDirectory, inputFileLocator);
         }
         catch (IMFException | MXFException e){
