@@ -19,25 +19,27 @@ public class S3FileLocator implements FileLocator {
 
     private String bucket;
     private String key;
+    private AmazonS3URI s3URI;
     private long length = 0;
 
     public S3FileLocator(String url) {
-        AmazonS3URI s3URI = new AmazonS3URI(url);
-        this.bucket = s3URI.getBucket();
-        this.key = s3URI.getKey();
+        this.s3URI = new AmazonS3URI(url, true);
+        this.bucket = this.s3URI.getBucket();
+        this.key = this.s3URI.getKey();
         this.setAWSEndpoint();
     }
 
     public S3FileLocator(URI url) {
-        AmazonS3URI s3URI = new AmazonS3URI(url);
-        this.bucket = s3URI.getBucket();
-        this.key = s3URI.getKey();
+        this.s3URI = new AmazonS3URI(url);
+        this.bucket = this.s3URI.getBucket();
+        this.key = this.s3URI.getKey();
         this.setAWSEndpoint();
     }
 
     public S3FileLocator(String bucket, String key) {
         this.bucket = bucket;
         this.key = key;
+        this.s3URI = new AmazonS3URI("s3://" + this.bucket + "/" + this.key, true);
         this.setAWSEndpoint();
     }
 
@@ -59,12 +61,8 @@ public class S3FileLocator implements FileLocator {
         }
     }
 
-    public URI toURI() throws IOException {
-        try {
-            return new URI("s3://" + this.bucket + "/" + this.key);
-        } catch (URISyntaxException x) {
-            throw new Error(x);
-        }
+    public URI toURI() {
+       return this.s3URI.getURI();
     }
 
     public String getAbsolutePath() {

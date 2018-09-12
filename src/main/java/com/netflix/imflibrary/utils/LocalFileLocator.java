@@ -38,6 +38,9 @@ public class LocalFileLocator implements FileLocator {
 
     public LocalFileLocator[] listFiles(FilenameFilter filenameFilter) throws IOException {
         File[] files = this.file.listFiles(filenameFilter);
+        if (files == null) {
+            return null;
+        }
         ArrayList<LocalFileLocator> fileLocators = new ArrayList<LocalFileLocator>();
         for (File file : files) {
             fileLocators.add(new LocalFileLocator(file));
