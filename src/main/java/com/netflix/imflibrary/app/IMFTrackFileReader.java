@@ -26,19 +26,8 @@ import com.netflix.imflibrary.st0377.IndexTableSegment;
 import com.netflix.imflibrary.st0377.PartitionPack;
 import com.netflix.imflibrary.st0377.RandomIndexPack;
 import com.netflix.imflibrary.st0377.StructuralMetadataID;
-import com.netflix.imflibrary.st0377.header.EssenceContainerData;
-import com.netflix.imflibrary.st0377.header.FileDescriptor;
-import com.netflix.imflibrary.st0377.header.GenericPackage;
-import com.netflix.imflibrary.st0377.header.InterchangeObject;
-import com.netflix.imflibrary.st0377.header.Preface;
-import com.netflix.imflibrary.st0377.header.SourcePackage;
-import com.netflix.imflibrary.utils.ByteArrayDataProvider;
-import com.netflix.imflibrary.utils.ByteProvider;
-import com.netflix.imflibrary.utils.ErrorLogger;
-import com.netflix.imflibrary.utils.FileByteRangeProvider;
-import com.netflix.imflibrary.utils.FileDataProvider;
-import com.netflix.imflibrary.utils.ResourceByteRangeProvider;
-import com.netflix.imflibrary.utils.Utilities;
+import com.netflix.imflibrary.st0377.header.*;
+import com.netflix.imflibrary.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -62,7 +51,7 @@ import java.util.*;
  * A simple application to exercise the core logic of Photon for reading and validating IMF Track files.
  */
 @ThreadSafe
-final class IMFTrackFileReader
+final public class IMFTrackFileReader
 {
     private final File workingDirectory;
     private final ResourceByteRangeProvider resourceByteRangeProvider;
@@ -80,10 +69,16 @@ final class IMFTrackFileReader
      * @param workingDirectory the working directory
      * @param resourceByteRangeProvider the MXF file represented as a {@link com.netflix.imflibrary.utils.ResourceByteRangeProvider}
      */
-    IMFTrackFileReader(File workingDirectory, ResourceByteRangeProvider resourceByteRangeProvider)
+    public IMFTrackFileReader(File workingDirectory, ResourceByteRangeProvider resourceByteRangeProvider)
     {
         this.workingDirectory = workingDirectory;
         this.resourceByteRangeProvider = resourceByteRangeProvider;
+    }
+
+    public IMFTrackFileReader(String inputFilePath, String workingDirectoryPath)
+    {
+        this.workingDirectory = new File(workingDirectoryPath);
+        this.resourceByteRangeProvider = FileLocator.fromLocation(inputFilePath).getResourceByteRangeProvider();
     }
 
     private IMFConstraints.HeaderPartitionIMF getHeaderPartitionIMF(@Nonnull IMFErrorLogger imfErrorLogger) throws IOException
@@ -592,7 +587,7 @@ final class IMFTrackFileReader
      * @param imfErrorLogger an error logger for recording any errors - cannot be null
      * @return editRate of the essence as a List of Long Integers
      */
-    List<Long> getEssenceEditRateAsList(@Nonnull IMFErrorLogger imfErrorLogger) throws IOException {
+    public List<Long> getEssenceEditRateAsList(@Nonnull IMFErrorLogger imfErrorLogger) throws IOException {
         if(!(this.getHeaderPartition(imfErrorLogger).getEssenceDescriptors().size() > 0)){
             throw new MXFException(String.format("No EssenceDescriptors were found in the MXF essence"));
         }
@@ -605,7 +600,7 @@ final class IMFTrackFileReader
      * @param imfErrorLogger an error logger for recording any errors - cannot be null
      * @return essenceDuration
      */
-    BigInteger getEssenceDuration(@Nonnull IMFErrorLogger imfErrorLogger) throws IOException {
+    public BigInteger getEssenceDuration(@Nonnull IMFErrorLogger imfErrorLogger) throws IOException {
         return this.getHeaderPartition(imfErrorLogger).getEssenceDuration();
     }
 
@@ -613,7 +608,7 @@ final class IMFTrackFileReader
      * A method to return the TrackFileId which is a UUID identifying the track file
      * @return UUID identifying the Track File
      */
-    UUID getTrackFileId(){
+    public UUID getTrackFileId(){
 
         Preface preface = this.headerPartition.getHeaderPartitionOP1A().getHeaderPartition().getPreface();
         GenericPackage genericPackage = preface.getContentStorage().getEssenceContainerDataList().get(0).getLinkedPackage();
@@ -680,20 +675,20 @@ final class IMFTrackFileReader
             throw new IllegalArgumentException("Invalid parameters");
         }
 
-        File inputFile = new File(args[0]);
-        if(!inputFile.exists()){
-            logger.error(String.format("File %s does not exist", inputFile.getAbsolutePath()));
+        FileLocator inputFileLocator = FileLocator.fromLocation(args[0]);
+        if(!inputFileLocator.exists()){
+            logger.error(String.format("File %s does not exist", inputFileLocator.getAbsolutePath()));
             System.exit(-1);
         }
         File workingDirectory = new File(args[1]);
 
-        ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
+        ResourceByteRangeProvider resourceByteRangeProvider = inputFileLocator.getResourceByteRangeProvider();
         IMFTrackFileReader imfTrackFileReader = null;
         IMFTrackFileCPLBuilder imfTrackFileCPLBuilder = null;
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         try {
-            imfTrackFileReader = new IMFTrackFileReader(workingDirectory, resourceByteRangeProvider);
-            imfTrackFileCPLBuilder = new IMFTrackFileCPLBuilder(workingDirectory, inputFile);
+            imfTrackFileReader = new IMFTrackFileReader(args[0], args[1]);
+            imfTrackFileCPLBuilder = new IMFTrackFileCPLBuilder(workingDirectory, inputFileLocator);
         }
         catch (IMFException | MXFException e){
             if(e instanceof IMFException){
@@ -714,6 +709,14 @@ final class IMFTrackFileReader
                 && imfTrackFileCPLBuilder != null
                 && supportedEssenceComponentTypes.contains(imfTrackFileReader.getEssenceType(imfErrorLogger))) {
             try {
+                HeaderPartition headerPartition = imfTrackFileReader.headerPartition.getHeaderPartitionOP1A().getHeaderPartition();
+                List<InterchangeObject.InterchangeObjectBO> subDescriptors = headerPartition.getSubDescriptors();
+                for (InterchangeObject.InterchangeObjectBO subDescriptor : subDescriptors) {
+                    if (subDescriptor instanceof PHDRMetaDataTrackSubDescriptor.PHDRMetaDataTrackSubDescriptorBO) {
+                        logger.info("Found a PHDRMetaDataTrackSubDescriptor with instanceID: " + UUIDHelper.fromUUID(UUID.nameUUIDFromBytes(subDescriptor.getInstanceUID().getUID())));
+                    }
+                }
+
                 for (InterchangeObject.InterchangeObjectBO essenceDescriptor : imfTrackFileReader.getEssenceDescriptors(imfErrorLogger)) {
                 /* create dom */
                     DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();

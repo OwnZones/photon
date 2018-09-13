@@ -23,10 +23,7 @@ import com.netflix.imflibrary.IMFErrorLoggerImpl;
 import com.netflix.imflibrary.RESTfulInterfaces.IMPValidator;
 import com.netflix.imflibrary.RESTfulInterfaces.PayloadRecord;
 import com.netflix.imflibrary.exceptions.IMFException;
-import com.netflix.imflibrary.utils.ErrorLogger;
-import com.netflix.imflibrary.utils.FileByteRangeProvider;
-import com.netflix.imflibrary.utils.ResourceByteRangeProvider;
-import com.netflix.imflibrary.utils.UUIDHelper;
+import com.netflix.imflibrary.utils.*;
 import com.netflix.imflibrary.writerTools.utils.ValidationEventHandlerImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,11 +96,11 @@ public final class PackingList
 
     /**
      * Constructor for a {@link com.netflix.imflibrary.st0429_8.PackingList PackingList} object that corresponds to a PackingList XML document
-     * @param packingListXMLFile the input XML file
+     * @param packingListXMLFileLocator the input XML file locator
      * @throws IOException - any I/O related error is exposed through an IOException
      */
-    public PackingList(File packingListXMLFile) throws IOException {
-        this(new FileByteRangeProvider(packingListXMLFile));
+    public PackingList(FileLocator packingListXMLFileLocator) throws IOException {
+        this(packingListXMLFileLocator.getResourceByteRangeProvider());
     }
 
     /**

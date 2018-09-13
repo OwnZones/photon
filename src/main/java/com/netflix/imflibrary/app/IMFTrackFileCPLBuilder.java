@@ -22,6 +22,9 @@ import com.netflix.imflibrary.IMFErrorLogger;
 import com.netflix.imflibrary.IMFErrorLoggerImpl;
 import com.netflix.imflibrary.st0377.HeaderPartition;
 import com.netflix.imflibrary.utils.ErrorLogger;
+import com.netflix.imflibrary.utils.FileLocator;
+import com.netflix.imflibrary.utils.RegXMLLibHelper;
+import com.netflix.imflibrary.utils.ResourceByteRangeProvider;
 import com.netflix.imflibrary.writerTools.CompositionPlaylistBuilder_2013;
 import com.sandflow.smpte.klv.Triplet;
 import com.netflix.imflibrary.KLVPacket;
@@ -40,10 +43,7 @@ import org.smpte_ra.schemas.st2067_2_2013.SegmentType;
 import org.smpte_ra.schemas.st2067_2_2013.SequenceType;
 import org.smpte_ra.schemas.st2067_2_2013.UserTextType;
 import com.netflix.imflibrary.st0377.header.InterchangeObject;
-import com.netflix.imflibrary.utils.FileByteRangeProvider;
-import com.netflix.imflibrary.utils.ResourceByteRangeProvider;
 import com.netflix.imflibrary.writerTools.IMFCPLObjectFieldsFactory;
-import com.netflix.imflibrary.utils.RegXMLLibHelper;
 import com.netflix.imflibrary.writerTools.utils.IMFUUIDGenerator;
 import com.netflix.imflibrary.writerTools.utils.IMFUtils;
 import org.slf4j.Logger;
@@ -83,7 +83,7 @@ final class IMFTrackFileCPLBuilder {
     private final RegXMLLibHelper regXMLLibHelper;
     private final File workingDirectory;
     private final org.smpte_ra.schemas.st2067_2_2013.CompositionPlaylistType cplRoot;
-    private final File mxfFile;
+    private final FileLocator mxfFile;
     private final String fileName;
 
 
@@ -91,11 +91,11 @@ final class IMFTrackFileCPLBuilder {
      * A constructor for the IMFTrackFileCPLBuilder class. This class creates an IMF CPL representation of an IMF Essence
      * @param workingDirectory - A location on a file system used for processing the essence.
      *                         This would also be the location where the CPL representation of the IMFEssence would be written into.
-     * @param essenceFile - File representing an IMF Essence
+     * @param essenceFileLocator - FileLocator representing an IMF Essence
      * @throws IOException - any I/O related error will be exposed through an IOException
      */
-    public IMFTrackFileCPLBuilder(File workingDirectory, File essenceFile) throws IOException {
-        ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(essenceFile);
+    public IMFTrackFileCPLBuilder(File workingDirectory, FileLocator essenceFileLocator) throws IOException {
+        ResourceByteRangeProvider resourceByteRangeProvider = essenceFileLocator.getResourceByteRangeProvider();
         this.imfTrackFileReader = new IMFTrackFileReader(workingDirectory, resourceByteRangeProvider);
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         KLVPacket.Header primerPackHeader = this.imfTrackFileReader.getPrimerPackHeader(imfErrorLogger);
@@ -103,7 +103,7 @@ final class IMFTrackFileCPLBuilder {
         this.workingDirectory = workingDirectory;
         /*Peek into the CompositionPlayListType and recursively construct its constituent fields*/
         this.cplRoot = IMFCPLObjectFieldsFactory.constructCompositionPlaylistType_2013();
-        this.mxfFile = essenceFile;
+        this.mxfFile = essenceFileLocator;
         this.fileName = this.mxfFile.getName();
     }
 
@@ -419,7 +419,7 @@ final class IMFTrackFileCPLBuilder {
         return sb.toString();
     }
 
-    public static void main(String[] args){
+    public static void main(String[] args) throws IOException{
 
         if (args.length != 2)
         {
@@ -427,22 +427,22 @@ final class IMFTrackFileCPLBuilder {
             throw new IllegalArgumentException("Invalid parameters");
         }
 
-        File inputFile = new File(args[0]);
-        if(!inputFile.exists()){
-            logger.error(String.format("File %s does not exist", inputFile.getAbsolutePath()));
+        FileLocator inputFileLocator = FileLocator.fromLocation(args[0]);
+        if(!inputFileLocator.exists()){
+            logger.error(String.format("File %s does not exist", inputFileLocator.getAbsolutePath()));
             System.exit(-1);
         }
         File workingDirectory = new File(args[1]);
 
-        logger.info(String.format("File Name is %s", inputFile.getName()));
-        ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
+        logger.info(String.format("File Name is %s", inputFileLocator.getName()));
+        ResourceByteRangeProvider resourceByteRangeProvider = inputFileLocator.getResourceByteRangeProvider();
         IMFTrackFileReader imfTrackFileReader = new IMFTrackFileReader(workingDirectory, resourceByteRangeProvider);
         StringBuilder sb = new StringBuilder();
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
 
         try
         {
-            IMFTrackFileCPLBuilder imfTrackFileCPLBuilder = new IMFTrackFileCPLBuilder(workingDirectory, inputFile);
+            IMFTrackFileCPLBuilder imfTrackFileCPLBuilder = new IMFTrackFileCPLBuilder(workingDirectory, inputFileLocator);
             sb.append(imfTrackFileReader.getRandomIndexPack(imfErrorLogger));
             logger.info(String.format("%s", sb.toString()));
 

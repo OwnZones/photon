@@ -19,6 +19,7 @@ package com.netflix.imflibrary.app;
 import com.netflix.imflibrary.IMFErrorLogger;
 import com.netflix.imflibrary.IMFErrorLoggerImpl;
 import com.netflix.imflibrary.KLVPacket;
+import com.netflix.imflibrary.utils.FileLocator;
 import org.smpte_ra.schemas.st2067_2_2013.CompositionPlaylistType;
 import com.netflix.imflibrary.st0377.HeaderPartition;
 import com.netflix.imflibrary.st0377.header.InterchangeObject;
@@ -64,7 +65,10 @@ public class IMFTrackFileCPLBuilderFunctionalTests {
         /*AudioEssence*/
         File inputFile = TestHelper.findResourceByPath("TearsOfSteel_4k_Test_Master_Audio_002.mxf");
         File workingDirectory = Files.createTempDirectory(null).toFile();
-        IMFTrackFileCPLBuilder imfTrackFileCPLBuilder = new IMFTrackFileCPLBuilder(workingDirectory, inputFile);
+        IMFTrackFileCPLBuilder imfTrackFileCPLBuilder = new IMFTrackFileCPLBuilder(
+                workingDirectory,
+                FileLocator.fromLocation(inputFile.toURI())
+        );
         IMFTrackFileReader imfTrackFileReader = new IMFTrackFileReader(workingDirectory, new FileByteRangeProvider(inputFile));
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         List<InterchangeObject.InterchangeObjectBO> essenceDescriptors = imfTrackFileReader.getEssenceDescriptors(imfErrorLogger);
