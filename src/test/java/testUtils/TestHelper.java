@@ -16,6 +16,8 @@
 
 package testUtils;
 
+import com.netflix.imflibrary.utils.FileLocator;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -34,7 +36,7 @@ public final class TestHelper
         //to prevent instantiation
     }
 
-    public static File findResourceByPath(String resourcePath)
+    public static FileLocator findResourceByPath(String resourcePath)
     {
         URL resource = TestHelper.class.getClassLoader().getResource(resourcePath);
         if (resource == null) {
@@ -42,7 +44,7 @@ public final class TestHelper
         }
 
         assertNotNull(resource, String.format("Resource %s does not exist", resourcePath));
-        return new File(resource.getPath());
+        return FileLocator.fromLocation(resource.getPath());
     }
 
     public static byte[] toByteArray(InputStream inputStream) throws IOException

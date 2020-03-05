@@ -99,6 +99,18 @@ public class IMFUtils {
     }
 
     /**
+     * A method that generates a SHA-1 hash of the FileLocator.
+     *
+     * @param fileLocator - the file whose SHA-1 hash is to be generated
+     * @return a byte[] representing the generated hash of the file
+     * @throws IOException - any I/O related error will be exposed through an IOException
+     */
+    public static byte[] generateSHA1Hash(FileLocator fileLocator) throws IOException {
+        ResourceByteRangeProvider resourceByteRangeProvider = fileLocator.getResourceByteRangeProvider();
+        return IMFUtils.generateHash(resourceByteRangeProvider, "SHA-1");
+    }
+
+    /**
      * A method that generates a SHA-1 hash of the incoming resource.
      *
      * @param resourceByteRangeProvider representing the resource whose digest is to be generated

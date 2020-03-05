@@ -683,7 +683,6 @@ final public class IMFTrackFileReader
         }
         File workingDirectory = new File(args[1]);
 
-        ResourceByteRangeProvider resourceByteRangeProvider = inputFileLocator.getResourceByteRangeProvider();
         IMFTrackFileReader imfTrackFileReader = null;
         IMFTrackFileCPLBuilder imfTrackFileCPLBuilder = null;
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
