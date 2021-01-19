@@ -20,6 +20,7 @@ import com.netflix.imflibrary.IMFErrorLogger;
 import com.netflix.imflibrary.IMFErrorLoggerImpl;
 import com.netflix.imflibrary.exceptions.IMFException;
 import com.netflix.imflibrary.utils.FileByteRangeProvider;
+import com.netflix.imflibrary.utils.FileLocator;
 import com.netflix.imflibrary.utils.ResourceByteRangeProvider;
 import com.netflix.imflibrary.writerTools.utils.IMFUtils;
 import org.testng.Assert;
@@ -37,7 +38,7 @@ public class IMFUtilsTests {
     @Test
     public void generateHashTest() throws IOException
     {
-        File inputFile = TestHelper.findResourceByPath("TearsOfSteel_4k_Test_Master_Audio_002.mxf");
+        FileLocator inputFile = TestHelper.findResourceByPath("TearsOfSteel_4k_Test_Master_Audio_002.mxf");
         String hash = new String(IMFUtils.generateSHA1HashAndBase64Encode(inputFile));
         Assert.assertEquals(hash, "fKE0Ukl/nR4ZSQiG43SziGDLDZ4=");
     }
@@ -45,7 +46,7 @@ public class IMFUtilsTests {
     @Test(expectedExceptions = IMFException.class)
     public void generateHashNegativeTest() throws IOException
     {
-        File inputFile = TestHelper.findResourceByPath("TearsOfSteel_4k_Test_Master_Audio_002.mxf");
+        FileLocator inputFile = TestHelper.findResourceByPath("TearsOfSteel_4k_Test_Master_Audio_002.mxf");
         ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
         IMFUtils.generateHash(resourceByteRangeProvider, "SHA-12");
     }

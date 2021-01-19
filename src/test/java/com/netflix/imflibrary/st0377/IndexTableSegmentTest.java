@@ -19,6 +19,7 @@ package com.netflix.imflibrary.st0377;
 import com.netflix.imflibrary.KLVPacket;
 import com.netflix.imflibrary.utils.ByteArrayDataProvider;
 import com.netflix.imflibrary.utils.ByteProvider;
+import com.netflix.imflibrary.utils.FileLocator;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import testUtils.TestHelper;
@@ -33,7 +34,7 @@ public class IndexTableSegmentTest
     @Test
     public void indexTableSegmentTest() throws IOException
     {
-        File inputFile = TestHelper.findResourceByPath("Netflix_Ident_23976_3840x2160_177AR.mxf.idx");
+        FileLocator inputFile = TestHelper.findResourceByPath("Netflix_Ident_23976_3840x2160_177AR.mxf.idx");
         byte[] bytes = Files.readAllBytes(Paths.get(inputFile.toURI()));
         ByteProvider byteProvider = new ByteArrayDataProvider(bytes);
         KLVPacket.Header header = new KLVPacket.Header(byteProvider, 0L);

@@ -2,6 +2,7 @@ package com.netflix.imflibrary.st2067_2;
 
 import com.netflix.imflibrary.IMFErrorLogger;
 import com.netflix.imflibrary.IMFErrorLoggerImpl;
+import com.netflix.imflibrary.utils.FileLocator;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import testUtils.TestHelper;
@@ -14,7 +15,7 @@ public class Application2CompositionTest
 {
     @Test
     public void app2CompositionCDCIPositiveTest() throws IOException {
-        File inputFile = TestHelper.findResourceByPath
+        FileLocator inputFile = TestHelper.findResourceByPath
                 ("TestIMP/Application2/CPL_BLACKL_202_1080p_REC709_178_ENG_fe8cf2f4-1bcd-4145-8f72-6775af4038c4.xml");
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         ApplicationCompositionFactory.getApplicationComposition(inputFile, imfErrorLogger);
@@ -23,7 +24,7 @@ public class Application2CompositionTest
 
     @Test
     public void app2CompositionRGBPositiveTest() throws IOException {
-        File inputFile = TestHelper.findResourceByPath
+        FileLocator inputFile = TestHelper.findResourceByPath
                 ("TestIMP/Application2/CPL_0eb3d1b9-b77b-4d3f-bbe5-7c69b15dca85.xml");
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         ApplicationCompositionFactory.getApplicationComposition(inputFile, imfErrorLogger);
@@ -32,7 +33,7 @@ public class Application2CompositionTest
 
     @Test
     public void app2CompositionInterlacePositiveTest() throws IOException {
-        File inputFile = TestHelper.findResourceByPath
+        FileLocator inputFile = TestHelper.findResourceByPath
                 ("TestIMP/Application2/CPL_BLACKL_202_1080p_REC709_178_ENG_fe8cf2f4-1bcd-4145-8f72-6775af4038c4_Interlace.xml");
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         ApplicationCompositionFactory.getApplicationComposition(inputFile, imfErrorLogger);
@@ -41,7 +42,7 @@ public class Application2CompositionTest
 
     @Test
     public void app2CompositionInterlaceErrorTest() throws IOException {
-        File inputFile = TestHelper.findResourceByPath
+        FileLocator inputFile = TestHelper.findResourceByPath
                 ("TestIMP/Application2/CPL_BLACKL_202_1080p_REC709_178_ENG_fe8cf2f4-1bcd-4145-8f72-6775af4038c4_InterlaceError.xml");
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         ApplicationCompositionFactory.getApplicationComposition(inputFile, imfErrorLogger);
@@ -50,7 +51,7 @@ public class Application2CompositionTest
 
     @Test
     public void app2CompositionRGBErrorTest() throws IOException {
-        File inputFile = TestHelper.findResourceByPath
+        FileLocator inputFile = TestHelper.findResourceByPath
                 ("TestIMP/Application2/CPL_0eb3d1b9-b77b-4d3f-bbe5-7c69b15dca85_Error.xml");
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         ApplicationCompositionFactory.getApplicationComposition(inputFile, imfErrorLogger);
@@ -59,7 +60,7 @@ public class Application2CompositionTest
 
     @Test
     public void app2CompositionColorSpaceErrorTest() throws IOException {
-        File inputFile = TestHelper.findResourceByPath
+        FileLocator inputFile = TestHelper.findResourceByPath
                 ("TestIMP/Application2/CPL_BLACKL_202_1080p_REC709_178_ENG_fe8cf2f4-1bcd-4145-8f72-6775af4038c4_ColorSpaceError.xml");
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         ApplicationCompositionFactory.getApplicationComposition(inputFile, imfErrorLogger);
@@ -68,7 +69,7 @@ public class Application2CompositionTest
 
     @Test
     public void app2CompositionColorErrorTest() throws IOException {
-        File inputFile = TestHelper.findResourceByPath
+        FileLocator inputFile = TestHelper.findResourceByPath
                 ("TestIMP/Application2/CPL_BLACKL_202_1080p_REC709_178_ENG_fe8cf2f4-1bcd-4145-8f72-6775af4038c4_ColorError.xml");
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         ApplicationCompositionFactory.getApplicationComposition(inputFile, imfErrorLogger);
@@ -77,7 +78,7 @@ public class Application2CompositionTest
 
     @Test
     public void app2CompositionQuantizationErrorTest() throws IOException {
-        File inputFile = TestHelper.findResourceByPath
+        FileLocator inputFile = TestHelper.findResourceByPath
                 ("TestIMP/Application2/CPL_BLACKL_202_1080p_REC709_178_ENG_fe8cf2f4-1bcd-4145-8f72-6775af4038c4_QuantizationError.xml");
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         ApplicationCompositionFactory.getApplicationComposition(inputFile, imfErrorLogger);
@@ -86,7 +87,7 @@ public class Application2CompositionTest
 
     @Test
     public void app2CompositionSamplingErrorTest() throws IOException {
-        File inputFile = TestHelper.findResourceByPath
+        FileLocator inputFile = TestHelper.findResourceByPath
                 ("TestIMP/Application2/CPL_BLACKL_202_1080p_REC709_178_ENG_fe8cf2f4-1bcd-4145-8f72-6775af4038c4_SamplingError.xml");
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         ApplicationCompositionFactory.getApplicationComposition(inputFile, imfErrorLogger);
@@ -95,7 +96,7 @@ public class Application2CompositionTest
 
     @Test
     public void app2CompositionSubDescriptorsErrorTest() throws IOException {
-        File inputFile = TestHelper.findResourceByPath
+        FileLocator inputFile = TestHelper.findResourceByPath
                 ("TestIMP/Application2/CPL_BLACKL_202_1080p_REC709_178_ENG_fe8cf2f4-1bcd-4145-8f72-6775af4038c4_SubDescriptorError.xml");
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         ApplicationCompositionFactory.getApplicationComposition(inputFile, imfErrorLogger);
@@ -104,7 +105,7 @@ public class Application2CompositionTest
 
     @Test
     public void app2CompositionJPEG2000SubDescriptorMissingComponentDepthErrorTest() throws IOException {
-        File inputFile = TestHelper.findResourceByPath
+        FileLocator inputFile = TestHelper.findResourceByPath
                 ("TestIMP/Application2/CPL_BLACKL_202_1080p_REC709_178_ENG_fe8cf2f4-1bcd-4145-8f72-6775af4038c4_SubDescriptorError_componentDepth_missing.xml");
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         ApplicationCompositionFactory.getApplicationComposition(inputFile, imfErrorLogger);
@@ -113,7 +114,7 @@ public class Application2CompositionTest
 
     @Test
     public void app2CompositionJPEG2000SubDescriptorComponentDepthPixelDepthMismatchErrorTest() throws IOException {
-        File inputFile = TestHelper.findResourceByPath
+        FileLocator inputFile = TestHelper.findResourceByPath
                 ("TestIMP/Application2/CPL_BLACKL_202_1080p_REC709_178_ENG_fe8cf2f4-1bcd-4145-8f72-6775af4038c4_SubDescriptorError_componentDepth_mismatch.xml");
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         ApplicationCompositionFactory.getApplicationComposition(inputFile, imfErrorLogger);
@@ -122,7 +123,7 @@ public class Application2CompositionTest
 
     @Test
     public void app2CompositionJPEG2000SubDescriptorErrorTest() throws IOException {
-        File inputFile = TestHelper.findResourceByPath
+        FileLocator inputFile = TestHelper.findResourceByPath
                 ("TestIMP/Application2/CPL_BLACKL_202_1080p_REC709_178_ENG_fe8cf2f4-1bcd-4145-8f72-6775af4038c4_JPEG2000SubDescriptorError.xml");
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         ApplicationCompositionFactory.getApplicationComposition(inputFile, imfErrorLogger);
@@ -131,7 +132,7 @@ public class Application2CompositionTest
 
     @Test
     public void app2CompositionJ2CLayoutErrorTest() throws IOException {
-        File inputFile = TestHelper.findResourceByPath
+        FileLocator inputFile = TestHelper.findResourceByPath
                 ("TestIMP/Application2/CPL_BLACKL_202_1080p_REC709_178_ENG_fe8cf2f4-1bcd-4145-8f72-6775af4038c4_J2CLayoutError.xml");
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         ApplicationCompositionFactory.getApplicationComposition(inputFile, imfErrorLogger);
@@ -140,7 +141,7 @@ public class Application2CompositionTest
 
     @Test
     public void app2CompositionRGBAComponentError1Test() throws IOException {
-        File inputFile = TestHelper.findResourceByPath
+        FileLocator inputFile = TestHelper.findResourceByPath
                 ("TestIMP/Application2/CPL_BLACKL_202_1080p_REC709_178_ENG_fe8cf2f4-1bcd-4145-8f72-6775af4038c4_RGBAComponentError.xml");
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         ApplicationCompositionFactory.getApplicationComposition(inputFile, imfErrorLogger);
@@ -149,7 +150,7 @@ public class Application2CompositionTest
 
     @Test
     public void app2CompositionRGBAComponentError2Test() throws IOException {
-        File inputFile = TestHelper.findResourceByPath
+        FileLocator inputFile = TestHelper.findResourceByPath
                 ("TestIMP/Application2/CPL_BLACKL_202_1080p_REC709_178_ENG_fe8cf2f4-1bcd-4145-8f72-6775af4038c4_RGBAError1.xml");
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         ApplicationCompositionFactory.getApplicationComposition(inputFile, imfErrorLogger);

@@ -1,6 +1,7 @@
 package com.netflix.imflibrary.st2067_201;
 
 import com.netflix.imflibrary.utils.ErrorLogger;
+import com.netflix.imflibrary.utils.FileLocator;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import testUtils.TestHelper;
@@ -18,7 +19,7 @@ public class IMPAnalyzerTest
     @Test
     public void IMPAnalyzerTest() throws IOException
     {
-        File inputFile = TestHelper.findResourceByPath("TestIMP/IAB/CompleteIMP");
+        FileLocator inputFile = TestHelper.findResourceByPath("TestIMP/IAB/CompleteIMP");
         Map<String, List<ErrorLogger.ErrorObject>> errorMap = analyzePackage(inputFile);
         Assert.assertEquals(errorMap.size(), 7);
         errorMap.entrySet().stream().forEach( e ->

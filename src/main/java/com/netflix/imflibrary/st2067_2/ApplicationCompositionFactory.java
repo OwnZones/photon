@@ -21,6 +21,7 @@ package com.netflix.imflibrary.st2067_2;
 import com.netflix.imflibrary.IMFErrorLogger;
 import com.netflix.imflibrary.exceptions.IMFException;
 import com.netflix.imflibrary.utils.FileByteRangeProvider;
+import com.netflix.imflibrary.utils.FileLocator;
 import com.netflix.imflibrary.utils.ResourceByteRangeProvider;
 
 import javax.annotation.Nullable;
@@ -82,6 +83,10 @@ public class ApplicationCompositionFactory {
 
             return APPLICATION_UNSUPPORTED_COMPOSITION_TYPE;
         }
+    }
+
+    public static ApplicationComposition getApplicationComposition(FileLocator fileLocator, IMFErrorLogger imfErrorLogger) throws IOException {
+        return getApplicationComposition(fileLocator.getResourceByteRangeProvider(), imfErrorLogger);
     }
 
     public static ApplicationComposition getApplicationComposition(File inputFile, IMFErrorLogger imfErrorLogger) throws IOException {

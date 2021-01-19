@@ -428,7 +428,7 @@ public class IMPValidatorFunctionalTests {
 
         //Create a temporary working directory under home
         Path tempPath = Files.createTempDirectory(Paths.get(System.getProperty("java.io.tmpdir")), "IMFDocuments");
-        FileLocator tempDir = tempPath.toFile();
+        File tempDir = tempPath.toFile();
 
         IMPBuilder.buildIMP_2016("IMP",
                 "Netflix",
@@ -439,9 +439,9 @@ public class IMPValidatorFunctionalTests {
                 tempDir);
 
         boolean cplFound = false;
-        FileLocator cplFile = null;
+        File cplFile = null;
 
-        for (File FileLocator : tempDir.listFiles()) {
+        for (File file : tempDir.listFiles()) {
             if (file.getName().contains("CPL-")) {
                 cplFound = true;
                 cplFile = file;

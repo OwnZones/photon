@@ -85,12 +85,12 @@ public class DOMNodeObjectModelTest {
 
     @Test
     public void domNodeObjectModelEquivalenceNegativeTest() throws IOException, ParserConfigurationException {
-        File inputFile1 = TestHelper.findResourceByPath("TestIMP/Netflix_Sony_Plugfest_2015/Netflix_Plugfest_Oct2015_ENG20.mxf.hdr");
-        File inputFile2 = TestHelper.findResourceByPath("TestIMP/Netflix_Sony_Plugfest_2015/Netflix_Plugfest_Oct2015_ENG51.mxf.hdr");
+        FileLocator inputFile1 = TestHelper.findResourceByPath("TestIMP/Netflix_Sony_Plugfest_2015/Netflix_Plugfest_Oct2015_ENG20.mxf.hdr");
+        FileLocator inputFile2 = TestHelper.findResourceByPath("TestIMP/Netflix_Sony_Plugfest_2015/Netflix_Plugfest_Oct2015_ENG51.mxf.hdr");
 
         List<DOMNodeObjectModel> domNodeObjectModels = new ArrayList<>();
-        domNodeObjectModels.addAll(setUp(inputFile1));
-        domNodeObjectModels.addAll(setUp(inputFile2));
+        domNodeObjectModels.addAll(setUp(FileLocator.toTmpFile(inputFile1)));
+        domNodeObjectModels.addAll(setUp(FileLocator.toTmpFile(inputFile2)));
 
         Set<String> ignoreSet = new HashSet<>();
         ignoreSet.add("InstanceUID");
@@ -104,11 +104,11 @@ public class DOMNodeObjectModelTest {
 
     @Test
     public void domNodeObjectModelEquivalencePositiveTest() throws IOException, ParserConfigurationException {
-        File inputFile1 = TestHelper.findResourceByPath("TestIMP/Netflix_Sony_Plugfest_2015/Netflix_Plugfest_Oct2015_ENG20.mxf.hdr");
+        FileLocator inputFile1 = TestHelper.findResourceByPath("TestIMP/Netflix_Sony_Plugfest_2015/Netflix_Plugfest_Oct2015_ENG20.mxf.hdr");
 
         List<DOMNodeObjectModel> domNodeObjectModels = new ArrayList<>();
-        domNodeObjectModels.addAll(setUp(inputFile1));
-        domNodeObjectModels.addAll(setUp(inputFile1));
+        domNodeObjectModels.addAll(setUp(FileLocator.toTmpFile(inputFile1)));
+        domNodeObjectModels.addAll(setUp(FileLocator.toTmpFile(inputFile1)));
 
         Set<String> ignoreSet = new HashSet<>();
         ignoreSet.add("InstanceUID");

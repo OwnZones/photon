@@ -19,7 +19,7 @@ public class IMPAnalyzerTest
     @Test
     public void IMPAnalyzerTest() throws IOException
     {
-        File inputFile = TestHelper.findResourceByPath("TestIMP/MERIDIAN_Netflix_Photon_161006/");
+        FileLocator inputFile = TestHelper.findResourceByPath("TestIMP/MERIDIAN_Netflix_Photon_161006/");
         Map<String, List<ErrorLogger.ErrorObject>> errorMap = analyzePackage(
                 FileLocator.fromLocation(inputFile.toURI())
         );
@@ -39,7 +39,7 @@ public class IMPAnalyzerTest
     @Test
     public void IMPAnalyzerTestIDMismatches() throws IOException
     {
-        File inputFile = TestHelper.findResourceByPath("TestIMP/MERIDIAN_Netflix_Photon_161006_ID_MISMATCH/");
+        FileLocator inputFile = TestHelper.findResourceByPath("TestIMP/MERIDIAN_Netflix_Photon_161006_ID_MISMATCH/");
         Map<String, List<ErrorLogger.ErrorObject>> errorMap = analyzePackage(inputFile);
         Assert.assertEquals(errorMap.size(), 7);
         errorMap.entrySet().stream().forEach( e ->

@@ -3,6 +3,7 @@ package com.netflix.imflibrary.st2067_2;
 import com.netflix.imflibrary.IMFErrorLogger;
 import com.netflix.imflibrary.IMFErrorLoggerImpl;
 import com.netflix.imflibrary.utils.FileByteRangeProvider;
+import com.netflix.imflibrary.utils.FileLocator;
 import com.netflix.imflibrary.writerTools.CompositionPlaylistBuilder_2013;
 import com.netflix.imflibrary.writerTools.utils.IMFUUIDGenerator;
 import org.testng.Assert;
@@ -23,7 +24,7 @@ public class CompositionTest
     public void testCompositionPlaylist() throws Exception
     {
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
-        File inputFile = TestHelper.findResourceByPath("test_mapped_file_set/CPL_682feecb-7516-4d93-b533-f40d4ce60539.xml");
+        FileLocator inputFile = TestHelper.findResourceByPath("test_mapped_file_set/CPL_682feecb-7516-4d93-b533-f40d4ce60539.xml");
         ApplicationComposition applicationComposition = ApplicationCompositionFactory.getApplicationComposition(inputFile, imfErrorLogger);
         Assert.assertTrue(ApplicationComposition.isCompositionPlaylist(new FileByteRangeProvider(inputFile)));
         Assert.assertTrue(applicationComposition.toString().length() > 0);
@@ -45,7 +46,7 @@ public class CompositionTest
 
     @Test
     public void compositionPositiveTest() throws IOException {
-        File inputFile = TestHelper.findResourceByPath
+        FileLocator inputFile = TestHelper.findResourceByPath
                 ("TestIMP/MERIDIAN_Netflix_Photon_161006/CPL_0eb3d1b9-b77b-4d3f-bbe5-7c69b15dca85.xml");
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         ApplicationCompositionFactory.getApplicationComposition(inputFile, imfErrorLogger);
@@ -54,7 +55,7 @@ public class CompositionTest
 
     @Test
     public void compositionWithMultipleImageResourcesPositiveTest() throws IOException {
-        File inputFile = TestHelper.findResourceByPath
+        FileLocator inputFile = TestHelper.findResourceByPath
                 ("TestIMP/Netflix_Sony_Plugfest_2015/CPL_BLACKL_202_HD_REC709_178_LAS_8fad47bb-ab01-4f0d-a08c-d1e6c6cb62b4.xml");
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         ApplicationCompositionFactory.getApplicationComposition(inputFile, imfErrorLogger);
@@ -64,7 +65,7 @@ public class CompositionTest
 
     @Test
     public void compositionNegativeTestInconsistentURI() throws IOException {
-        File inputFile = TestHelper.findResourceByPath
+        FileLocator inputFile = TestHelper.findResourceByPath
                 ("TestIMP/Netflix_Sony_Plugfest_2015/CPL_BLACKL_202_HD_REC709_178_LAS_8fad47bb-ab01-4f0d-a08c-d1e6c6cb62b4_InconsistentNamespaceURI.xml");
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         ApplicationCompositionFactory.getApplicationComposition(inputFile, imfErrorLogger);
@@ -300,7 +301,7 @@ public class CompositionTest
 
     @Test
     public void compositionWithMultipleApplicationIdentificationPositiveTest() throws IOException {
-        File inputFile = TestHelper.findResourceByPath
+        FileLocator inputFile = TestHelper.findResourceByPath
                 ("TestIMP/ApplicationIdentification/CPL-multiple-values-supported.xml");
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         ApplicationCompositionFactory.getApplicationComposition(inputFile, imfErrorLogger);
@@ -309,7 +310,7 @@ public class CompositionTest
 
     @Test
     public void compositionWithMultipleApplicationIdentificationDuplicatePositiveTest() throws IOException {
-        File inputFile = TestHelper.findResourceByPath
+        FileLocator inputFile = TestHelper.findResourceByPath
                 ("TestIMP/ApplicationIdentification/CPL-multiple-values-supported-duplicated.xml");
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         ApplicationCompositionFactory.getApplicationComposition(inputFile, imfErrorLogger);
@@ -318,7 +319,7 @@ public class CompositionTest
 
     @Test
     public void compositionWithMultipleApplicationIdentificationPartialNegativeTest() throws IOException {
-        File inputFile = TestHelper.findResourceByPath
+        FileLocator inputFile = TestHelper.findResourceByPath
                 ("TestIMP/ApplicationIdentification/CPL-multiple-values-partially-supported.xml");
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         ApplicationCompositionFactory.getApplicationComposition(inputFile, imfErrorLogger);
@@ -327,7 +328,7 @@ public class CompositionTest
 
     @Test
     public void compositionWithMultipleApplicationIdentificationFullyNegativeTest() throws IOException {
-        File inputFile = TestHelper.findResourceByPath
+        FileLocator inputFile = TestHelper.findResourceByPath
                 ("TestIMP/ApplicationIdentification/CPL-multiple-values-non-supported.xml");
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         ApplicationCompositionFactory.getApplicationComposition(inputFile, imfErrorLogger);
@@ -336,7 +337,7 @@ public class CompositionTest
 
     @Test
     public void composition2020Test() throws IOException {
-        File inputFile = TestHelper.findResourceByPath
+        FileLocator inputFile = TestHelper.findResourceByPath
                 ("TestIMP/IMF-2020/CPL-2020_updated-core-constraints.xml");
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         ApplicationComposition applicationComposition = ApplicationCompositionFactory.getApplicationComposition(inputFile, imfErrorLogger);
@@ -346,7 +347,7 @@ public class CompositionTest
 
     @Test
     public void composition2020WithoutAudioTrackTest() throws IOException {
-        File inputFile = TestHelper.findResourceByPath
+        FileLocator inputFile = TestHelper.findResourceByPath
                 ("TestIMP/IMF-2020/CPL-2020_no-audio-track.xml");
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         ApplicationComposition applicationComposition = ApplicationCompositionFactory.getApplicationComposition(inputFile, imfErrorLogger);
@@ -356,7 +357,7 @@ public class CompositionTest
 
     @Test
     public void composition2016WithoutAudioTrackNegativeTest() throws IOException {
-        File inputFile = TestHelper.findResourceByPath
+        FileLocator inputFile = TestHelper.findResourceByPath
                 ("TestIMP/IMF-2020/CPL-2016_no-audio-track.xml");
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         ApplicationComposition applicationComposition = ApplicationCompositionFactory.getApplicationComposition(inputFile, imfErrorLogger);

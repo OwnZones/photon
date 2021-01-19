@@ -3,6 +3,7 @@ package com.netflix.imflibrary.app;
 import com.netflix.imflibrary.exceptions.MXFException;
 import com.netflix.imflibrary.st0377.HeaderPartition;
 import com.netflix.imflibrary.utils.FileByteRangeProvider;
+import com.netflix.imflibrary.utils.FileLocator;
 import com.netflix.imflibrary.utils.ResourceByteRangeProvider;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -23,7 +24,7 @@ public class MXFEssenceReaderTest
     @Test
     public void MXFAudioEssenceReaderTest() throws IOException
     {
-        File inputFile = TestHelper.findResourceByPath("TearsOfSteel_4k_Test_Master_Audio_002.mxf");
+        FileLocator inputFile = TestHelper.findResourceByPath("TearsOfSteel_4k_Test_Master_Audio_002.mxf");
         File workingDirectory = Files.createTempDirectory(null).toFile();
         ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
         MXFEssenceReader mxfEssenceReader = new MXFEssenceReader(workingDirectory, resourceByteRangeProvider);
@@ -38,11 +39,11 @@ public class MXFEssenceReaderTest
     @Test(expectedExceptions = MXFException.class, expectedExceptionsMessageRegExp = "randomIndexPackSize = .*")
     public void badRandomIndexPackLength() throws IOException
     {
-        File inputFile = TestHelper.findResourceByPath("TearsOfSteel_4k_Test_Master_Audio_002.mxf");
+        FileLocator inputFile = TestHelper.findResourceByPath("TearsOfSteel_4k_Test_Master_Audio_002.mxf");
         File workingDirectory = Files.createTempDirectory(null).toFile();
         ResourceByteRangeProvider resourceByteRangeProvider = mock(ResourceByteRangeProvider.class);
         when(resourceByteRangeProvider.getResourceSize()).thenReturn(16L);
-        when(resourceByteRangeProvider.getByteRange(anyLong(), anyLong(), any(File.class))).thenReturn(inputFile);
+        when(resourceByteRangeProvider.getByteRange(anyLong(), anyLong(), any(File.class))).thenReturn(FileLocator.toTmpFile(inputFile));
         MXFEssenceReader mxfEssenceReader = new MXFEssenceReader(workingDirectory, resourceByteRangeProvider);
         mxfEssenceReader.getRandomIndexPack();
     }

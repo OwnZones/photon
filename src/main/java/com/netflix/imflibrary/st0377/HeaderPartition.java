@@ -63,11 +63,7 @@ import com.netflix.imflibrary.st2067_2.AudioContentKind;
 import com.netflix.imflibrary.st2067_2.Composition;
 import com.netflix.imflibrary.st2067_201.IABEssenceDescriptor;
 import com.netflix.imflibrary.st2067_201.IABSoundfieldLabelSubDescriptor;
-import com.netflix.imflibrary.utils.ByteArrayDataProvider;
-import com.netflix.imflibrary.utils.ByteProvider;
-import com.netflix.imflibrary.utils.ErrorLogger;
-import com.netflix.imflibrary.utils.FileByteRangeProvider;
-import com.netflix.imflibrary.utils.ResourceByteRangeProvider;
+import com.netflix.imflibrary.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1466,14 +1462,12 @@ public final class HeaderPartition
 
     /**
      * A static method to get the Header Partition from a file
-     * @param inputFile source file to get the Header Partition from
+     * @param resourceByteRangeProvider source byte range provider to get the Header Partition from
      * @param imfErrorLogger logging object
      * @return an HeaderPartition object constructed from the file
      * @throws IOException any I/O related error will be exposed through an IOException
      */
-    public static HeaderPartition fromFile(File inputFile, IMFErrorLogger imfErrorLogger) throws IOException {
-        ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
-
+    public static HeaderPartition fromByteRangeProvider(ResourceByteRangeProvider resourceByteRangeProvider, IMFErrorLogger imfErrorLogger) throws IOException {
         long archiveFileSize = resourceByteRangeProvider.getResourceSize();
         long rangeEnd = archiveFileSize - 1;
         long rangeStart = archiveFileSize - 4;
@@ -1494,6 +1488,28 @@ public final class HeaderPartition
         ByteProvider byteProvider = new ByteArrayDataProvider(headerPartitionBytes);
 
         return new HeaderPartition(byteProvider, 0L, headerPartitionBytes.length, imfErrorLogger);
+    }
+
+    /**
+     * A static method to get the Header Partition from a file
+     * @param fileLocator source file locator to get the Header Partition from
+     * @param imfErrorLogger logging object
+     * @return an HeaderPartition object constructed from the file
+     * @throws IOException any I/O related error will be exposed through an IOException
+     */
+    public static HeaderPartition fromFileLocator(FileLocator fileLocator, IMFErrorLogger imfErrorLogger) throws IOException {
+        return HeaderPartition.fromByteRangeProvider(fileLocator.getResourceByteRangeProvider(), imfErrorLogger);
+    }
+
+    /**
+     * A static method to get the Header Partition from a file
+     * @param inputFile source file to get the Header Partition from
+     * @param imfErrorLogger logging object
+     * @return an HeaderPartition object constructed from the file
+     * @throws IOException any I/O related error will be exposed through an IOException
+     */
+    public static HeaderPartition fromFile(File inputFile, IMFErrorLogger imfErrorLogger) throws IOException {
+        return HeaderPartition.fromByteRangeProvider(new FileByteRangeProvider(inputFile), imfErrorLogger);
     }
 
     /**

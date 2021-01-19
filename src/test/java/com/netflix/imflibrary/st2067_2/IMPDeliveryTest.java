@@ -17,7 +17,7 @@ public class IMPDeliveryTest
     @Test
     public void testIMPDelivery() throws Exception
     {
-        File inputFile = TestHelper.findResourceByPath("test_mapped_file_set");
+        FileLocator inputFile = TestHelper.findResourceByPath("test_mapped_file_set");
         BasicMapProfileV2MappedFileSet basicMapProfileV2MappedFileSet = new BasicMapProfileV2MappedFileSet(
                 FileLocator.fromLocation(inputFile.toURI())
         );

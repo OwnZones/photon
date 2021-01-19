@@ -19,6 +19,7 @@ package com.netflix.imflibrary.app;
 
 import com.netflix.imflibrary.st2067_2.ApplicationCompositionFactory.ApplicationCompositionType;
 import com.netflix.imflibrary.utils.ErrorLogger;
+import com.netflix.imflibrary.utils.FileLocator;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import testUtils.TestHelper;
@@ -36,7 +37,7 @@ public class IMPAnalyzerTestApp5
     @Test
     public void IMPAnalyzerTestApp5() throws IOException
     {
-        File inputFile = TestHelper.findResourceByPath("TestIMP/Application5/PhotonApp5Test/");
+        FileLocator inputFile = TestHelper.findResourceByPath("TestIMP/Application5/PhotonApp5Test/");
         Map<String, List<ErrorLogger.ErrorObject>> errorMap = analyzePackage(inputFile);
         Assert.assertEquals(errorMap.size(), 7);
         errorMap.entrySet().stream().forEach( e ->

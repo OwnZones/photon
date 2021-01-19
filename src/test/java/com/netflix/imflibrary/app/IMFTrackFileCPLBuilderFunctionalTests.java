@@ -63,7 +63,7 @@ public class IMFTrackFileCPLBuilderFunctionalTests {
     @Test
     public void RegXMLLibTest() throws IOException, ParserConfigurationException, TransformerException {
         /*AudioEssence*/
-        File inputFile = TestHelper.findResourceByPath("TearsOfSteel_4k_Test_Master_Audio_002.mxf");
+        FileLocator inputFile = TestHelper.findResourceByPath("TearsOfSteel_4k_Test_Master_Audio_002.mxf");
         File workingDirectory = Files.createTempDirectory(null).toFile();
         IMFTrackFileCPLBuilder imfTrackFileCPLBuilder = new IMFTrackFileCPLBuilder(
                 workingDirectory,
@@ -86,7 +86,7 @@ public class IMFTrackFileCPLBuilderFunctionalTests {
     @Test
     public void EssenceDescriptorTest() throws IOException, ParserConfigurationException, TransformerException {
         /*Audio Essence*/
-        File inputFile = TestHelper.findResourceByPath("TearsOfSteel_4k_Test_Master_Audio_002.mxf.hdr");
+        FileLocator inputFile = TestHelper.findResourceByPath("TearsOfSteel_4k_Test_Master_Audio_002.mxf.hdr");
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         byte[] headerPartitionBytes = Files.readAllBytes(Paths.get(inputFile.toURI()));
         ByteProvider byteProvider = new ByteArrayDataProvider(headerPartitionBytes);

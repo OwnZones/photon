@@ -18,6 +18,7 @@
 
 package com.netflix.imflibrary.utils;
 
+import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,6 +32,7 @@ import java.nio.file.StandardCopyOption;
  */
 public interface FileLocator
 {
+    public char separator = '/';
 
     public static FileLocator fromLocation(String location) {
         if (location.startsWith("s3://")) {
@@ -73,6 +75,13 @@ public interface FileLocator
         return outputFilePath;
     }
 
+    public static File toTmpFile(FileLocator fileLocator) throws IOException {
+        File file = File.createTempFile("tmp", "");
+        file.deleteOnExit();
+        FileLocator.copy(fileLocator, file.toPath());
+        return file;
+    }
+
     /**
      * Tests whether the file locator represents a directory.
      */
@@ -110,9 +119,7 @@ public interface FileLocator
     public String getName() throws IOException;
 
     /**
-     * Converts this abstract pathname into a pathname string.  The resulting
-     * string uses the {@link #separator default name-separator character} to
-     * separate the names in the name sequence.
+     * Converts this abstract pathname into a pathname string.
      */
     public String getPath() throws IOException;
 

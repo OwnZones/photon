@@ -48,15 +48,15 @@ public final class FileByteRangeProvider implements ResourceByteRangeProvider
 
     /**
      * Constructor for a FileByteRangeProvider
-     * @param resourceFile whose data will be read by this data provider
+     * @param resourceFileLocator whose data will be read by this data provider
      */
-    public FileByteRangeProvider(FileLocator resourceFileLocator) throws Exception
+    public FileByteRangeProvider(FileLocator resourceFileLocator) throws IOException
     {
         if (resourceFileLocator instanceof LocalFileLocator) {
             this.resourceFile = ((LocalFileLocator) resourceFileLocator).getFile();
             this.fileSize = this.resourceFile.length();
         } else {
-            throw new Exception("FileByteRangeProvider only works with LocalFileLocator");
+            throw new IOException("FileByteRangeProvider only works with LocalFileLocator");
         }
     }
 
