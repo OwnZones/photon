@@ -52,6 +52,10 @@ public class ApplicationCompositionFactory {
         add("http://www.smpte-ra.org/ns/2067-50/2017");
     }});
 
+    private static final Set<String> namespacesApplication5Composition = Collections.unmodifiableSet(new HashSet<String>() {{
+        add("http://www.smpte-ra.org/ns/2067-50/2017");
+    }});
+
     public enum ApplicationCompositionType {
         APPLICATION_2_COMPOSITION_TYPE(Application2Composition.class,          namespacesApplication2Composition),
         APPLICATION_2E_COMPOSITION_TYPE(Application2ExtendedComposition.class, namespacesApplication2EComposition),
@@ -132,7 +136,7 @@ public class ApplicationCompositionFactory {
                    return null;
                }
             }
-
+            e.printStackTrace();
             imfErrorLogger.addError(IMFErrorLogger.IMFErrors.ErrorCodes.INTERNAL_ERROR, IMFErrorLogger.IMFErrors.ErrorLevels.FATAL,
                     String.format(String.format("No matching constructor for class %s", clazz != null ? clazz.getSimpleName(): "ApplicationComposition")));
             return null;

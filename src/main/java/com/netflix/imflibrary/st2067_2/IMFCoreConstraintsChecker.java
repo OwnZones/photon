@@ -49,6 +49,11 @@ final class IMFCoreConstraintsChecker {
         add("Xsiz");
         add("Ysiz");
         add("Csiz");
+        //App #5 ACES
+ //       add("TargetFrameAncillaryResourceID");
+//        add("ACESPictureSubDescriptorInstanceID");
+        add("ACESPictureSubDescriptor");
+        add("TargetFrameSubDescriptor");
         add("J2CLayout");
         add("RGBAComponent");
         add("Code");
