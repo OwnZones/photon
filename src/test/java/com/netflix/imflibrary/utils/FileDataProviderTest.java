@@ -29,7 +29,7 @@ import java.util.Arrays;
 @Test(groups = "unit")
 public class FileDataProviderTest
 {
-    File inputFile;
+    FileLocator inputFile;
     InputStream inputStream;
 
     @BeforeClass
@@ -39,9 +39,9 @@ public class FileDataProviderTest
     }
 
     @BeforeMethod
-    public void beforeMethod() throws FileNotFoundException
+    public void beforeMethod() throws IOException
     {
-        inputStream = new FileInputStream(inputFile);
+        inputStream = inputFile.getInputStream();
     }
 
     @AfterMethod
@@ -58,7 +58,7 @@ public class FileDataProviderTest
     {
         byte[] refBytes = Arrays.copyOf(TestHelper.toByteArray(inputStream), 100);
 
-        ByteProvider byteProvider = new FileDataProvider(this.inputFile);
+        ByteProvider byteProvider = new FileDataProvider(FileLocator.toTmpFile(this.inputFile));
         byte[] bytes = byteProvider.getBytes(100);
 
         Assert.assertEquals(refBytes, bytes);
@@ -70,14 +70,14 @@ public class FileDataProviderTest
         long length = inputFile.length();
         Assert.assertTrue(length < Integer.MAX_VALUE);
 
-        ByteProvider byteProvider = new FileDataProvider(this.inputFile);
+        ByteProvider byteProvider = new FileDataProvider(FileLocator.toTmpFile(this.inputFile));
         byteProvider.getBytes((int)length + 1);
     }
 
     @Test
     public void testSkipBytes() throws IOException
     {
-        ByteProvider byteProvider = new FileDataProvider(this.inputFile);
+        ByteProvider byteProvider = new FileDataProvider(FileLocator.toTmpFile(this.inputFile));
         byteProvider.skipBytes(100L);
         byte[] bytes = byteProvider.getBytes(1);
         Assert.assertEquals(bytes.length, 1);
@@ -90,7 +90,7 @@ public class FileDataProviderTest
         long length = inputFile.length();
         Assert.assertTrue(length < Integer.MAX_VALUE);
 
-        ByteProvider byteProvider = new FileDataProvider(this.inputFile);
+        ByteProvider byteProvider = new FileDataProvider(FileLocator.toTmpFile(this.inputFile));
         byteProvider.skipBytes(length + 1);
     }
 

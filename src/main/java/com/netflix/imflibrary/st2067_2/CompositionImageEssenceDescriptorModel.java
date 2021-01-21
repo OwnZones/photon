@@ -40,6 +40,7 @@ public final class CompositionImageEssenceDescriptorModel {
     private final Integer storedHeight;
     private final Fraction sampleRate;
     private final Integer pixelBitDepth;
+    private final Integer componentDepth;
     private final Colorimetry.Quantization quantization;
     private final Colorimetry color;
     private final Colorimetry.Sampling sampling;
@@ -108,6 +109,8 @@ public final class CompositionImageEssenceDescriptorModel {
         this.storedOffset = getFieldAsInteger(storedF2OffsetUL);
         this.sampleHeight = getFieldAsInteger(sampledHeightUL);
         this.sampleWidth = getFieldAsInteger(sampledWidthUL);
+
+        this.componentDepth = getFieldAsInteger(componentDepthUL);
 
         this.transferCharacteristic = Colorimetry.TransferCharacteristic.valueOf(imageEssencedescriptorDOMNode.getFieldAsUL(regXMLLibDictionary.getSymbolNameFromURN
                 (transferCharacteristicUL)));
@@ -213,6 +216,10 @@ public final class CompositionImageEssenceDescriptorModel {
         return sampleRate;
     }
 
+    public Integer getComponentDepth() {
+        return componentDepth;
+    }
+
     public @Nonnull Integer getPixelBitDepth() {
         return pixelBitDepth;
     }
@@ -294,7 +301,7 @@ public final class CompositionImageEssenceDescriptorModel {
     }
     
     public @Nonnull Integer getDisplayWidth() {
-    	return displayWidth;
+        return displayWidth;
     }
     
     public @Nonnull Integer getDisplayHeight() {
@@ -305,73 +312,73 @@ public final class CompositionImageEssenceDescriptorModel {
         return displayXOffset;
     }
 
-	public @Nullable Integer getDisplayYOffset() {
-	    return displayYOffset;
-	}
+    public @Nullable Integer getDisplayYOffset() {
+        return displayYOffset;
+    }
 
-	public @Nullable Integer getDisplayF2Offset() {
-	    return displayF2Offset;
-	}
+    public @Nullable Integer getDisplayF2Offset() {
+        return displayF2Offset;
+    }
 
-	public @Nullable Fraction getImageAspectRatio() {
-	    return imageAspectRatio;
-	}
+    public @Nullable Fraction getImageAspectRatio() {
+        return imageAspectRatio;
+    }
 
-	public @Nullable Integer getActiveFormatDescriptor() {
-	    return activeFormatDescriptor;
-	}
+    public @Nullable Integer getActiveFormatDescriptor() {
+        return activeFormatDescriptor;
+    }
 
-	public @Nullable Integer getAlphaTransparency() {
-	    return alphaTransparency;
-	}
+    public @Nullable Integer getAlphaTransparency() {
+        return alphaTransparency;
+    }
 
-	public @Nullable Integer getImageAlignmentOffset() {
-	    return imageAlignmentOffset;
-	}
+    public @Nullable Integer getImageAlignmentOffset() {
+        return imageAlignmentOffset;
+    }
 
-	public @Nullable Integer getImageStartOffset() {
-	    return imageStartOffset;
-	}
+    public @Nullable Integer getImageStartOffset() {
+        return imageStartOffset;
+    }
 
-	public @Nullable Integer getImageEndOffset() {
-	    return imageEndOffset;
-	}
+    public @Nullable Integer getImageEndOffset() {
+        return imageEndOffset;
+    }
 
-	public @Nullable Integer getFieldDominance() {
-	    return fieldDominance;
-	}
+    public @Nullable Integer getFieldDominance() {
+        return fieldDominance;
+    }
 
-	public @Nullable UL getCodingEquations() {
-	    return codingEquations;
-	}
+    public @Nullable UL getCodingEquations() {
+        return codingEquations;
+    }
 
-	public @Nullable Integer getComponentMinRef() {
-	    return componentMinRef;
-	}
+    public @Nullable Integer getComponentMinRef() {
+        return componentMinRef;
+    }
 
-	public @Nullable Integer getComponentMaxRef() {
-	    return componentMaxRef;
-	}
+    public @Nullable Integer getComponentMaxRef() {
+        return componentMaxRef;
+    }
 
-	public @Nullable Integer getAlphaMinRef() {
-	    return alphaMinRef;
-	}
+    public @Nullable Integer getAlphaMinRef() {
+        return alphaMinRef;
+    }
 
-	public @Nullable Integer getAlphaMaxRef() {
-	    return alphaMaxRef;
-	}
+    public @Nullable Integer getAlphaMaxRef() {
+        return alphaMaxRef;
+    }
 
-	public @Nullable Integer getScanningDirection() {
-	    return scanningDirection;
-	}
+    public @Nullable Integer getScanningDirection() {
+        return scanningDirection;
+    }
 
-	public @Nullable String getPalette() {
-	    return palette;
-	}
+    public @Nullable String getPalette() {
+        return palette;
+    }
 
-	public @Nullable String getPaletteLayout() {
-	    return paletteLayout;
-	}
+    public @Nullable String getPaletteLayout() {
+        return paletteLayout;
+    }
 
     private @Nonnull Integer parsePixelBitDepth(@Nonnull ColorModel colorModel) {
         Integer refPixelBitDepth = null;
@@ -543,6 +550,7 @@ public final class CompositionImageEssenceDescriptorModel {
         if (subDescriptors != null) {
             List<DOMNodeObjectModel> acesPictureSubDescriptors = subDescriptors.getDOMNodes(regXMLLibDictionary.getSymbolNameFromURN(acesPictureSubDescriptorUL));
             List<DOMNodeObjectModel> targetFrameSubDescriptors = subDescriptors.getDOMNodes(regXMLLibDictionary.getSymbolNameFromURN(targetFrameSubDescriptorUL));
+            List<DOMNodeObjectModel> containerConstraintsSubDescriptors = subDescriptors.getDOMNodes(regXMLLibDictionary.getSymbolNameFromURN(containerConstraintsSubDescriptorUL));
             if (!acesPictureSubDescriptors.isEmpty()) {
                 for (DOMNodeObjectModel domNodeObjectModel : acesPictureSubDescriptors) {
                     String authoring_information = domNodeObjectModel.getFieldAsString(regXMLLibDictionary.getSymbolNameFromURN(acesAuthoringInformationUL));
@@ -565,7 +573,7 @@ public final class CompositionImageEssenceDescriptorModel {
             } else {
                 imfErrorLogger.addError(IMFErrorLogger.IMFErrors.ErrorCodes.APPLICATION_COMPOSITION_ERROR,
                         IMFErrorLogger.IMFErrors.ErrorLevels.WARNING,
-                        String.format("INFO (can be ignored): No ACESPictureSubDescriptor found"));
+                        String.format("INFO (can be ignored): EssenceDescriptor with ID %s: No ACESPictureSubDescriptor found", imageEssencedescriptorID.toString()));
             }
             if (!targetFrameSubDescriptors.isEmpty()) {
                 for (DOMNodeObjectModel domNodeObjectModel : targetFrameSubDescriptors) {
@@ -578,7 +586,7 @@ public final class CompositionImageEssenceDescriptorModel {
                         //TODO Check it targetFrameAncillaryResourceID belongs to an existing GSP
                         imfErrorLogger.addError(IMFErrorLogger.IMFErrors.ErrorCodes.APPLICATION_COMPOSITION_ERROR,
                                 IMFErrorLogger.IMFErrors.ErrorLevels.WARNING,
-                                String.format("INFO: Target FrameSubDescriptor (ID %s) references an Ancillary Resource (ID %s), but Ancillary Resources cannot be checked yet", 
+                                String.format("INFO (can be ignored): Target FrameSubDescriptor (ID %s) references an Ancillary Resource (ID %s), but Ancillary Resources cannot be checked yet", 
                                         domNodeObjectModel.getFieldsAsUUID(regXMLLibDictionary.getSymbolNameFromURN(instanceID)).toString(), targetFrameAncillaryResourceID.toString()));
                     }
                     String media_type = domNodeObjectModel.getFieldAsString(regXMLLibDictionary.getSymbolNameFromURN(mediaTypeUL));
@@ -645,12 +653,17 @@ public final class CompositionImageEssenceDescriptorModel {
             } else {
                 imfErrorLogger.addError(IMFErrorLogger.IMFErrors.ErrorCodes.APPLICATION_COMPOSITION_ERROR,
                         IMFErrorLogger.IMFErrors.ErrorLevels.WARNING,
-                        String.format("INFO (can be ignored): No TargetFrameSubDescriptor found"));
+                        String.format("INFO (can be ignored): EssenceDescriptor with ID %s: No TargetFrameSubDescriptor found", imageEssencedescriptorID.toString()));
+            }
+            if (containerConstraintsSubDescriptors.isEmpty()) {
+                imfErrorLogger.addError(IMFErrorLogger.IMFErrors.ErrorCodes.APPLICATION_COMPOSITION_ERROR,
+                        IMFErrorLogger.IMFErrors.ErrorLevels.WARNING,
+                        String.format("EssenceDescriptor with ID %s: A ContainerConstraintsSubDescriptor shall be present per ST 379-2, but is missing", imageEssencedescriptorID.toString()));
             }
         } else {
             imfErrorLogger.addError(IMFErrorLogger.IMFErrors.ErrorCodes.APPLICATION_COMPOSITION_ERROR,
                     IMFErrorLogger.IMFErrors.ErrorLevels.WARNING,
-                    String.format("INFO (can be ignored): No ACESPictureSubDescriptor and no TargetFrameSubDescriptor found"));
+                    String.format("INFO (can be ignored): EssenceDescriptor with ID %s: No ACESPictureSubDescriptor and no TargetFrameSubDescriptor found", imageEssencedescriptorID.toString()));
         }
         return;
     }

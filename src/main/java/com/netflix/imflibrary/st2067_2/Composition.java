@@ -187,6 +187,7 @@ public final class Composition {
         CommentarySequence("CommentarySequence"),
         KaraokeSequence("KaraokeSequence"),
         AncillaryDataSequence("AncillaryDataSequence"),
+        IABSequence("IABSequence"),
         UnsupportedSequence("UnsupportedSequence");
 
         private final String name;
@@ -221,6 +222,8 @@ public final class Composition {
                     return KaraokeSequence;
                 case "AncillaryDataSequence":
                     return AncillaryDataSequence;
+                case "IABSequence":
+                    return IABSequence;
                 case "UnsupportedSequence":
                 default:
                     return UnsupportedSequence;
@@ -299,12 +302,10 @@ public final class Composition {
          */
         public long getDurationInTrackEditRateUnits(){
             long duration = 0L;
-            if(this.getSequenceTypeEnum().equals(SequenceTypeEnum.MainImageSequence)
-                    || this.getSequenceTypeEnum().equals(SequenceTypeEnum.MainAudioSequence)){
-
-                for(IMFBaseResourceType imfBaseResourceType : this.resources){
-                    IMFTrackFileResourceType imfTrackFileResourceType = IMFTrackFileResourceType.class.cast(imfBaseResourceType);
-                    duration += imfTrackFileResourceType.getSourceDuration().longValue() * imfTrackFileResourceType.getRepeatCount().longValue();
+            for(IMFBaseResourceType imfBaseResourceType : this.resources){
+                // Only handle TrackFileResource sequences currently
+                if (imfBaseResourceType instanceof IMFTrackFileResourceType) {
+                    duration += imfBaseResourceType.getSourceDuration().longValue() * imfBaseResourceType.getRepeatCount().longValue();
                 }
             }
             return duration;

@@ -18,7 +18,6 @@ import com.netflix.imflibrary.st0429_9.BasicMapProfileV2MappedFileSet;
 import com.netflix.imflibrary.st2067_100.OutputProfileList;
 import com.netflix.imflibrary.st2067_2.ApplicationComposition;
 import com.netflix.imflibrary.st2067_2.ApplicationCompositionFactory;
-import com.netflix.imflibrary.st2067_2.ApplicationCompositionFactory.ApplicationCompositionType;
 import com.netflix.imflibrary.st2067_2.Composition;
 import com.netflix.imflibrary.st2067_2.IMFEssenceComponentVirtualTrack;
 import com.netflix.imflibrary.utils.*;
@@ -52,37 +51,28 @@ public class IMPAnalyzer {
 
     private static final String CONFORMANCE_LOGGER_PREFIX = "Virtual Track Conformance";
     private static final Logger logger = LoggerFactory.getLogger(IMPAnalyzer.class);
-    private static ApplicationSet expectedAppType;
 
-    private static Map<UUID, PayloadRecord> getTrackFileIdToHeaderPartitionPayLoadMap(List<PayloadRecord>
-                                                                                headerPartitionPayloadRecords) throws
+    private static UUID getTrackFileId(PayloadRecord payloadRecord, IMFErrorLogger imfErrorLogger) throws
             IOException {
 
-        IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
-        Map<UUID, PayloadRecord> trackFileIDMap = new HashMap<>();
+        if (payloadRecord.getPayloadAssetType() != PayloadRecord.PayloadAssetType.EssencePartition) {
+            imfErrorLogger.addError(IMFErrorLogger.IMFErrors.ErrorCodes.IMP_VALIDATOR_PAYLOAD_ERROR,
+                    IMFErrorLogger.IMFErrors.ErrorLevels.FATAL,
+                    String.format("Payload asset type is %s, expected asset type %s", payloadRecord.getPayloadAssetType(),
+                            PayloadRecord.PayloadAssetType.EssencePartition.toString()));
+            return null;
+        }
 
-        for (PayloadRecord payloadRecord : headerPartitionPayloadRecords) {
-            if (payloadRecord.getPayloadAssetType() != PayloadRecord.PayloadAssetType.EssencePartition) {
-                imfErrorLogger.addError(IMFErrorLogger.IMFErrors.ErrorCodes.IMP_VALIDATOR_PAYLOAD_ERROR,
-                        IMFErrorLogger.IMFErrors.ErrorLevels.FATAL,
-                        String.format("Payload asset type is %s, expected asset type %s", payloadRecord.getPayloadAssetType(),
-                                PayloadRecord.PayloadAssetType.EssencePartition.toString()));
-                continue;
-            }
-
-            HeaderPartition headerPartition = new HeaderPartition(new ByteArrayDataProvider(payloadRecord.getPayload()),
+        HeaderPartition headerPartition = new HeaderPartition(new ByteArrayDataProvider(payloadRecord.getPayload()),
                 0L,
                 (long) payloadRecord.getPayload().length,
                 imfErrorLogger);
 
-            Preface preface = headerPartition.getPreface();
-            GenericPackage genericPackage = preface.getContentStorage().getEssenceContainerDataList().get(0).getLinkedPackage();
-            SourcePackage filePackage = (SourcePackage) genericPackage;
-            UUID packageUUID = filePackage.getPackageMaterialNumberasUUID();
-            trackFileIDMap.put(packageUUID, payloadRecord);
-        }
-
-        return Collections.unmodifiableMap(trackFileIDMap);
+        Preface preface = headerPartition.getPreface();
+        GenericPackage genericPackage = preface.getContentStorage().getEssenceContainerDataList().get(0).getLinkedPackage();
+        SourcePackage filePackage = (SourcePackage) genericPackage;
+        UUID packageUUID = filePackage.getPackageMaterialNumberasUUID();
+        return packageUUID;
     }
 
 
@@ -99,7 +89,7 @@ public class IMPAnalyzer {
     }
 
     private static Boolean isCompositionComplete(ApplicationComposition applicationComposition, Set<UUID> trackFileIDsSet, IMFErrorLogger imfErrorLogger) throws IOException {
-        Boolean bComplete = true;
+        boolean bComplete = true;
         for (IMFEssenceComponentVirtualTrack virtualTrack : applicationComposition.getEssenceVirtualTracks()) {
             for (UUID uuid : virtualTrack.getTrackResourceIds()) {
                 if (!trackFileIDsSet.contains(uuid)) {
@@ -251,7 +241,7 @@ public class IMPAnalyzer {
                     try {
                         PackingList packingList = new PackingList(FileLocator.fromLocation(rootFileLocator, packingListAsset.getPath().toString()));
                         packingListErrorLogger.addAllErrors(packingList.getErrors());
-
+                        Map<UUID, PayloadRecord> trackFileIDToHeaderPartitionPayLoadMap = new HashMap<>();
                         for (PackingList.Asset asset : packingList.getAssets()) {
                             if (asset.getType().equals(PackingList.Asset.APPLICATION_MXF_TYPE)) {
                                 URI path = assetMap.getPath(asset.getUUID());
@@ -283,6 +273,15 @@ public class IMPAnalyzer {
                                         payloadRecords.add(headerPartitionPayloadRecord);
                                         trackFileErrorLogger.addAllErrors(IMPValidator.validateIMFTrackFileHeaderMetadata(payloadRecords));
                                         headerPartitionPayloadRecords.add(headerPartitionPayloadRecord);
+                                        UUID trackFileID = getTrackFileId(headerPartitionPayloadRecord, trackFileErrorLogger);
+                                        if(trackFileID != null) {
+                                            trackFileIDToHeaderPartitionPayLoadMap.put(trackFileID, headerPartitionPayloadRecord);
+                                            if (!trackFileID.equals(asset.getUUID())) {
+                                                // ST 2067-2:2016   7.3.1: The value of the Id element shall be extracted from the asset as specified in Table 19 for the track file asset
+                                                trackFileErrorLogger.addError(IMFErrorLogger.IMFErrors.ErrorCodes.IMF_ESSENCE_COMPONENT_ERROR,
+                                                        IMFErrorLogger.IMFErrors.ErrorLevels.NON_FATAL, String.format("UUID %s in the MXF file is not same as UUID %s of the MXF file in the AssetMap", trackFileID.toString(), asset.getUUID().toString()));
+                                            }
+                                        }
                                     }
                                     List<PayloadRecord>  payloadRecords = getIndexTablePartitionPayloadRecords(resourceByteRangeProvider, trackFileErrorLogger);
                                     trackFileErrorLogger.addAllErrors(IMPValidator.validateIndexTableSegments(payloadRecords));
@@ -298,7 +297,7 @@ public class IMPAnalyzer {
                             }
                         }
 
-                        List<ApplicationComposition> applicationCompositionList = analyzeApplicationCompositions( rootFileLocator, assetMap, packingList, headerPartitionPayloadRecords, packingListErrorLogger, errorMap);
+                        List<ApplicationComposition> applicationCompositionList = analyzeApplicationCompositions( rootFileLocator, assetMap, packingList, headerPartitionPayloadRecords, packingListErrorLogger, errorMap, trackFileIDToHeaderPartitionPayLoadMap);
 
                         analyzeOutputProfileLists( rootFileLocator, assetMap, packingList, applicationCompositionList, packingListErrorLogger, errorMap);
 
@@ -320,28 +319,29 @@ public class IMPAnalyzer {
             errorMap.put(rootFileLocator.getName(), imfErrorLogger.getErrors());
         }
 
-
         return errorMap;
     }
 
     public static List<ErrorLogger.ErrorObject> validateEssencePartition(ResourceByteRangeProvider resourceByteRangeProvider) throws IOException {
 
-            IMFErrorLogger trackFileErrorLogger = new IMFErrorLoggerImpl();
+        IMFErrorLogger trackFileErrorLogger = new IMFErrorLoggerImpl();
+        List<PayloadRecord> headerPartitionPayloadRecords = new ArrayList<>();
 
-            PayloadRecord headerPartitionPayload = getHeaderPartitionPayloadRecord(resourceByteRangeProvider, trackFileErrorLogger);
-            if(headerPartitionPayload == null) {
-                trackFileErrorLogger.addError(IMFErrorLogger.IMFErrors.ErrorCodes.IMP_VALIDATOR_PAYLOAD_ERROR, IMFErrorLogger.IMFErrors.ErrorLevels.FATAL,
-                        String.format("Failed to get header partition"));
-            }
-            else {
-                List<PayloadRecord> payloadRecords = new ArrayList<>();
-                payloadRecords.add(headerPartitionPayload);
-                trackFileErrorLogger.addAllErrors(IMPValidator.validateIMFTrackFileHeaderMetadata(payloadRecords));
-            }
+        PayloadRecord headerPartitionPayload = getHeaderPartitionPayloadRecord(resourceByteRangeProvider, trackFileErrorLogger);
+        if(headerPartitionPayload == null) {
+            trackFileErrorLogger.addError(IMFErrorLogger.IMFErrors.ErrorCodes.IMP_VALIDATOR_PAYLOAD_ERROR, IMFErrorLogger.IMFErrors.ErrorLevels.FATAL,
+                    String.format("Failed to get header partition"));
+        }
+        else {
+            headerPartitionPayloadRecords.add(headerPartitionPayload);
+            trackFileErrorLogger.addAllErrors(IMPValidator.validateIMFTrackFileHeaderMetadata(headerPartitionPayloadRecords));
+        }
 
         // Validate index table segments
-        List<PayloadRecord>  payloadRecords = getIndexTablePartitionPayloadRecords(resourceByteRangeProvider, trackFileErrorLogger);
-        trackFileErrorLogger.addAllErrors(IMPValidator.validateIndexTableSegments(payloadRecords));
+        List<PayloadRecord>  indexSegmentPayloadRecords = getIndexTablePartitionPayloadRecords(resourceByteRangeProvider, trackFileErrorLogger);
+        trackFileErrorLogger.addAllErrors(IMPValidator.validateIndexTableSegments(indexSegmentPayloadRecords));
+
+        trackFileErrorLogger.addAllErrors(IMPValidator.validateIndexEditRate(headerPartitionPayloadRecords, indexSegmentPayloadRecords));
 
         return trackFileErrorLogger.getErrors();
     }
@@ -380,7 +380,11 @@ public class IMPAnalyzer {
                             continue;
                         }
 
-                        outputProfileListTypeList.add(outputProfileListType);
+                        if(!outputProfileListType.getId().equals(asset.getUUID())) {
+                            // ST 2067-2:2016   7.3.1: The value of the Id element shall be extracted from the asset as specified in Table 19 for the OPL asset
+                            imfErrorLogger.addError(IMFErrorLogger.IMFErrors.ErrorCodes.IMF_CPL_ERROR,
+                                    IMFErrorLogger.IMFErrors.ErrorLevels.NON_FATAL, String.format("UUID %s in the OPL is not same as UUID %s of the OPL in the AssetMap", outputProfileListType.getId().toString(), asset.getUUID().toString()));
+                        }                        outputProfileListTypeList.add(outputProfileListType);
 
                         Optional<ApplicationComposition> optional = applicationCompositionList.stream().filter(e -> e.getUUID().equals(outputProfileListType.getCompositionPlaylistId())).findAny();
                         if(!optional.isPresent()) {
@@ -409,14 +413,9 @@ public class IMPAnalyzer {
                                                   PackingList packingList,
                                                   List<PayloadRecord> headerPartitionPayloadRecords,
                                                   IMFErrorLogger packingListErrorLogger,
-                                                  Map<String, List<ErrorLogger.ErrorObject>> errorMap) throws IOException {
-
-        Map<UUID, PayloadRecord> trackFileIDToHeaderPartitionPayLoadMap =
-                getTrackFileIdToHeaderPartitionPayLoadMap(headerPartitionPayloadRecords);
-
+                                                  Map<String, List<ErrorLogger.ErrorObject>> errorMap,
+                                                  Map<UUID, PayloadRecord> trackFileIDToHeaderPartitionPayLoadMap) throws IOException {
         List<ApplicationComposition> applicationCompositionList = new ArrayList<>();
-        //If called as static method: Assume testing versus App#2/2E specification
-        if (expectedAppType == null) expectedAppType = ApplicationSet.APPLICATION_2_SET;
 
         for (PackingList.Asset asset : packingList.getAssets()) {
             if (asset.getType().equals(PackingList.Asset.TEXT_XML_TYPE)) {
@@ -446,14 +445,11 @@ public class IMPAnalyzer {
                         if(applicationComposition == null) {
                             continue;
                         }
-
-                        ApplicationCompositionType applicationCompositionType = applicationComposition.getApplicationCompositionType();
-                        if (!expectedAppType.getApplicationSet().contains(applicationCompositionType)) {
-	                        compositionErrorLogger.addError(IMFErrorLogger.IMFErrors.ErrorCodes.APPLICATION_COMPOSITION_ERROR,
-	                                IMFErrorLogger.IMFErrors.ErrorLevels.NON_FATAL,
-	                                String.format("CPL Application is %s vs. expected type one of %s", applicationComposition.getApplicationCompositionType().toString(), expectedAppType.getApplicationSet().toString()));
+                        if(!applicationComposition.getUUID().equals(asset.getUUID())) {
+                            // ST 2067-2:2016   7.3.1: The value of the Id element shall be extracted from the asset as specified in Table 19 for the CPL asset
+                            compositionErrorLogger.addError(IMFErrorLogger.IMFErrors.ErrorCodes.IMF_CPL_ERROR,
+                                    IMFErrorLogger.IMFErrors.ErrorLevels.NON_FATAL, String.format("UUID %s in the CPL is not same as UUID %s of the CPL in the AssetMap", applicationComposition.getUUID().toString(), asset.getUUID().toString()));
                         }
-
                         applicationCompositionList.add(applicationComposition);
                         Set<UUID> trackFileIDsSet = trackFileIDToHeaderPartitionPayLoadMap
                                 .keySet();
@@ -553,8 +549,6 @@ public class IMPAnalyzer {
         sb.append(String.format("%s <asset_map_file>%n", IMPAnalyzer.class.getName()));
         sb.append(String.format("%s <pkl_file>%n", IMPAnalyzer.class.getName()));
         sb.append(String.format("%s <mxf_file>%n", IMPAnalyzer.class.getName()));
-        sb.append(String.format("options:            %n"));
-        sb.append(String.format("-a, --application APPSTRING      IMF Application to test against, supported values for APPSTRING are app2or2E, app5 or all (default: app2or2E)%n"));
         return sb.toString();
     }
 
@@ -585,39 +579,9 @@ public class IMPAnalyzer {
 
     }
 
-    private static final Set<ApplicationCompositionType> application2Set = Collections.unmodifiableSet(new HashSet<ApplicationCompositionType>() {{
-        add(com.netflix.imflibrary.st2067_2.ApplicationCompositionFactory.ApplicationCompositionType.APPLICATION_2_COMPOSITION_TYPE);
-        add(com.netflix.imflibrary.st2067_2.ApplicationCompositionFactory.ApplicationCompositionType.APPLICATION_2E_COMPOSITION_TYPE);
-    }});
-
-    private static final Set<ApplicationCompositionType> application5Set = Collections.unmodifiableSet(new HashSet<ApplicationCompositionType>() {{
-        add(com.netflix.imflibrary.st2067_2.ApplicationCompositionFactory.ApplicationCompositionType.APPLICATION_5_COMPOSITION_TYPE);
-    }});
-
-    private static final Set<ApplicationCompositionType> applicationAllSet = Collections.unmodifiableSet(new HashSet<ApplicationCompositionType>() {{
-        addAll(application2Set);
-        addAll(application5Set);
-    }});
-
-    public enum ApplicationSet {
-        APPLICATION_2_SET(application2Set),
-        APPLICATION_5_SET(application5Set),
-        APPLICATION_ALL_SET(applicationAllSet);
-
-        private Set<ApplicationCompositionType> appplicationSet;
-
-        ApplicationSet(Set<ApplicationCompositionType> applicationSet) {
-            this.appplicationSet = applicationSet;
-        }
-
-        public Set<ApplicationCompositionType> getApplicationSet() {
-            return appplicationSet;
-        }
-    }
-
     public static void main(String args[]) throws IOException
     {
-        if ((args.length != 1) && (args.length != 3))
+        if (args.length != 1)
         {
             logger.error(usage());
             System.exit(-1);
@@ -627,32 +591,6 @@ public class IMPAnalyzer {
         if(!inputFileLocator.exists()){
             logger.error(String.format("File %s does not exist", inputFileLocator.getAbsolutePath()));
             System.exit(-1);
-        }
-
-        if(inputFileLocator.isDirectory()) {
-            expectedAppType = ApplicationSet.APPLICATION_2_SET;
-            for (int argIdx = 1; argIdx < args.length; ++argIdx) {
-                String curArg = args[argIdx];
-                String nextArg = argIdx < args.length - 1 ? args[argIdx + 1] : "";
-                if (curArg.equalsIgnoreCase("--application") || curArg.equalsIgnoreCase("-a")) {
-                    if (nextArg.length() == 0 || nextArg.charAt(0) == '-') {
-                        logger.error(usage());
-                        System.exit(-1);
-                    }
-                    if (nextArg.equalsIgnoreCase("app5")) {
-                        expectedAppType = ApplicationSet.APPLICATION_5_SET;
-                    } else if (nextArg.equalsIgnoreCase("all")) {
-                        expectedAppType = ApplicationSet.APPLICATION_ALL_SET;
-                    } else if (!nextArg.equalsIgnoreCase("app2or2E")) {
-                        logger.error(usage());
-                        System.exit(-1);
-                    }
-                    argIdx++;
-                } else {
-                    logger.error(usage());
-                    System.exit(-1);
-                }
-            }
         }
 
         if(inputFileLocator.isDirectory()) {

@@ -18,9 +18,9 @@
 
 package com.netflix.imflibrary.writerTools.utils;
 
-import com.netflix.imflibrary.IMFErrorLoggerImpl;
 import com.netflix.imflibrary.exceptions.IMFException;
 import com.netflix.imflibrary.utils.FileLocator;
+import com.netflix.imflibrary.utils.FileByteRangeProvider;
 import com.netflix.imflibrary.utils.ResourceByteRangeProvider;
 import org.smpte_ra.schemas.st2067_2_2013.BaseResourceType;
 import org.smpte_ra.schemas.st2067_2_2013.CompositionPlaylistType;
@@ -87,6 +87,41 @@ public class IMFUtils {
     }
 
     /**
+     * A method that generates a SHA-1 hash of the file.
+     *
+     * @param file - the file whose SHA-1 hash is to be generated
+     * @return a byte[] representing the generated hash of the file
+     * @throws IOException - any I/O related error will be exposed through an IOException
+     */
+    public static byte[] generateSHA1Hash(File file) throws IOException {
+            ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(file);
+            return IMFUtils.generateHash(resourceByteRangeProvider, "SHA-1");
+    }
+
+    /**
+     * A method that generates a SHA-1 hash of the FileLocator.
+     *
+     * @param fileLocator - the file whose SHA-1 hash is to be generated
+     * @return a byte[] representing the generated hash of the file
+     * @throws IOException - any I/O related error will be exposed through an IOException
+     */
+    public static byte[] generateSHA1Hash(FileLocator fileLocator) throws IOException {
+        ResourceByteRangeProvider resourceByteRangeProvider = fileLocator.getResourceByteRangeProvider();
+        return IMFUtils.generateHash(resourceByteRangeProvider, "SHA-1");
+    }
+
+    /**
+     * A method that generates a SHA-1 hash of the incoming resource.
+     *
+     * @param resourceByteRangeProvider representing the resource whose digest is to be generated
+     * @return a byte[] representing the generated hash of the file
+     * @throws IOException - any I/O related error will be exposed through an IOException
+     */
+    public static byte[] generateSHA1Hash(ResourceByteRangeProvider resourceByteRangeProvider) throws IOException {
+        return IMFUtils.generateHash(resourceByteRangeProvider, "SHA-1");
+    }
+
+    /**
      * A method that generates a SHA-1 hash of the file and Base64 encode the result.
      *
      * @param fileLocator - the file locator whose SHA-1 hash is to be generated
@@ -123,35 +158,38 @@ public class IMFUtils {
     }
 
     /**
-     * A method to generate a SHA-1 digest of the incoming resource
-     * @param resourceByteRangeProvider representing the resource whose SHA-1 digest is to be generated
-     * @return a byte[] representing the SHA-1 digest of the resource
-     * @throws NoSuchAlgorithmException - if no Provider supports a MessageDigestSpi implementation for the
-     *          specified algorithm.
+     * A method to generate a digest of the incoming resource for a given algorithm
+     * @param resourceByteRangeProvider representing the resource whose digest is to be generated
+     * @param hashAlgorithm the name of the hash algorithm
+     * @return a byte[] representing the digest of the resource
      * @throws IOException - any I/O related error will be exposed through an IOException
      */
-    public static byte[] generateSHA1Hash(ResourceByteRangeProvider resourceByteRangeProvider) throws NoSuchAlgorithmException, IOException {
-        MessageDigest md = MessageDigest.getInstance("SHA1");
-        long rangeStart = 0;
-        long rangeEnd = (rangeStart + 1023 > resourceByteRangeProvider.getResourceSize()-1)
-                ? resourceByteRangeProvider.getResourceSize()-1
-                : rangeStart + 1023;
-
-        int nread = 0;
-
-        while (rangeStart < resourceByteRangeProvider.getResourceSize()
-                && rangeEnd < resourceByteRangeProvider.getResourceSize()) {
-            byte[] dataBytes = resourceByteRangeProvider.getByteRangeAsBytes(rangeStart, rangeEnd);
-            nread = (int)(rangeEnd - rangeStart + 1);
-            md.update(dataBytes, 0, nread);
-            rangeStart = rangeEnd+1;
-            rangeEnd = (rangeStart + 1023 > resourceByteRangeProvider.getResourceSize()-1)
-                    ? resourceByteRangeProvider.getResourceSize()-1
+    public static byte[] generateHash(ResourceByteRangeProvider resourceByteRangeProvider, String hashAlgorithm) throws IOException {
+        try {
+            MessageDigest md = MessageDigest.getInstance(hashAlgorithm);
+            long rangeStart = 0;
+            long rangeEnd = (rangeStart + 1023 > resourceByteRangeProvider.getResourceSize() - 1)
+                    ? resourceByteRangeProvider.getResourceSize() - 1
                     : rangeStart + 1023;
-        };
 
-        byte[] mdbytes = md.digest();
-        return Arrays.copyOf(mdbytes, mdbytes.length);
+            int nread = 0;
+
+            while (rangeStart < resourceByteRangeProvider.getResourceSize()
+                    && rangeEnd < resourceByteRangeProvider.getResourceSize()) {
+                byte[] dataBytes = resourceByteRangeProvider.getByteRangeAsBytes(rangeStart, rangeEnd);
+                nread = (int) (rangeEnd - rangeStart + 1);
+                md.update(dataBytes, 0, nread);
+                rangeStart = rangeEnd + 1;
+                rangeEnd = (rangeStart + 1023 > resourceByteRangeProvider.getResourceSize() - 1)
+                        ? resourceByteRangeProvider.getResourceSize() - 1
+                        : rangeStart + 1023;
+            }
+            byte[] mdbytes = md.digest();
+            return Arrays.copyOf(mdbytes, mdbytes.length);
+        }
+        catch (NoSuchAlgorithmException e){
+            throw new IMFException(e);
+        }
     }
 
     /**

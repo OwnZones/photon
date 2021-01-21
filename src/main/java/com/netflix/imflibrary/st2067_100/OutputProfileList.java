@@ -36,11 +36,7 @@ import com.netflix.imflibrary.st2067_100.macro.preset.PresetMacro;
 import com.netflix.imflibrary.st2067_2.ApplicationComposition;
 import com.netflix.imflibrary.st2067_2.Composition;
 import com.netflix.imflibrary.st2067_2.IMFEssenceComponentVirtualTrack;
-import com.netflix.imflibrary.utils.DOMNodeObjectModel;
-import com.netflix.imflibrary.utils.ErrorLogger;
-import com.netflix.imflibrary.utils.FileByteRangeProvider;
-import com.netflix.imflibrary.utils.ResourceByteRangeProvider;
-import com.netflix.imflibrary.utils.UUIDHelper;
+import com.netflix.imflibrary.utils.*;
 import com.netflix.imflibrary.writerTools.utils.ValidationEventHandlerImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -181,7 +177,7 @@ public final class OutputProfileList {
      * @param resourceByteRangeProvider corresponding to the OutputProfileList XML file.
      * @param imfErrorLogger - an object for logging errors
      * @return Output profile list object model
-     * @throws IOException
+     * @throws IOException - any I/O related error is exposed through an IOException
      */
     public static OutputProfileList getOutputProfileListType(ResourceByteRangeProvider resourceByteRangeProvider, IMFErrorLogger imfErrorLogger) throws IOException {
         JAXBElement jaxbElement = null;
@@ -274,6 +270,7 @@ public final class OutputProfileList {
     /**
      * A method to get handle map with Application Composition applied on output profile
      * @param applicationComposition ApplicationComposition related to this output profile
+     * @param imfErrorLogger logger for recording any parsing errors
      * @return Map containing a string handle to object representation of the handle
      */
     public Map<String, Handle> getHandleMapWithApplicationComposition(ApplicationComposition applicationComposition, IMFErrorLogger imfErrorLogger) {
@@ -364,7 +361,7 @@ public final class OutputProfileList {
          * Add handles for OPL macros
          */
         for( int iteration = 0; iteration < this.macroMap.size(); iteration++) {
-            Boolean bAllDependencyMet = true;
+            boolean bAllDependencyMet = true;
             for (Map.Entry<String, Macro> entry : this.macroMap.entrySet()) {
                 Macro macro = entry.getValue();
                 /* Check for all the input dependencies for the macro */
@@ -477,12 +474,12 @@ public final class OutputProfileList {
             throw new IllegalArgumentException("Invalid parameters");
         }
 
-        File inputFile = new File(args[0]);
+        FileLocator inputFile = FileLocator.fromLocation(args[0]);
         if(!inputFile.exists()){
             logger.error(String.format("File %s does not exist", inputFile.getAbsolutePath()));
             System.exit(-1);
         }
-        ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
+        ResourceByteRangeProvider resourceByteRangeProvider = inputFile.getResourceByteRangeProvider();
         byte[] bytes = resourceByteRangeProvider.getByteRangeAsBytes(0, resourceByteRangeProvider.getResourceSize()-1);
         PayloadRecord payloadRecord = new PayloadRecord(bytes, PayloadRecord.PayloadAssetType.OutputProfileList, 0L, resourceByteRangeProvider.getResourceSize());
         List<ErrorLogger.ErrorObject>errors = IMPValidator.validateOPL(payloadRecord);

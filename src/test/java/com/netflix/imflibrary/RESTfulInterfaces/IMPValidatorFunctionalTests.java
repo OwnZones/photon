@@ -3,7 +3,7 @@
  * Copyright 2015 Netflix, Inc.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
+ *    you may not use this FileLocator except in compliance with the License.
  *    You may obtain a copy of the License at
  *
  *         http://www.apache.org/licenses/LICENSE-2.0
@@ -28,12 +28,7 @@ import com.netflix.imflibrary.st0377.header.SourcePackage;
 import com.netflix.imflibrary.st2067_2.ApplicationComposition;
 import com.netflix.imflibrary.st2067_2.Composition;
 import com.netflix.imflibrary.st2067_2.ApplicationCompositionFactory;
-import com.netflix.imflibrary.utils.ByteArrayByteRangeProvider;
-import com.netflix.imflibrary.utils.ByteArrayDataProvider;
-import com.netflix.imflibrary.utils.ByteProvider;
-import com.netflix.imflibrary.utils.ErrorLogger;
-import com.netflix.imflibrary.utils.FileByteRangeProvider;
-import com.netflix.imflibrary.utils.ResourceByteRangeProvider;
+import com.netflix.imflibrary.utils.*;
 import com.netflix.imflibrary.writerTools.CompositionPlaylistBuilder_2016;
 import com.netflix.imflibrary.writerTools.IMPBuilder;
 import com.netflix.imflibrary.writerTools.utils.IMFUtils;
@@ -68,22 +63,22 @@ public class IMPValidatorFunctionalTests {
     @Test
     public void getPayloadTypeTest() throws IOException {
         //AssetMap
-        File inputFile = TestHelper.findResourceByPath("TestIMP/NYCbCrLT_3840x2160x23.98x10min/ASSETMAP.xml");
-        ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
+        FileLocator inputFile = TestHelper.findResourceByPath("TestIMP/NYCbCrLT_3840x2160x23.98x10min/ASSETMAP.xml");
+        ResourceByteRangeProvider resourceByteRangeProvider = inputFile.getResourceByteRangeProvider();
         byte[] bytes = resourceByteRangeProvider.getByteRangeAsBytes(0, resourceByteRangeProvider.getResourceSize()-1);
         PayloadRecord payloadRecord = new PayloadRecord(bytes, PayloadRecord.PayloadAssetType.Unknown, 0L, resourceByteRangeProvider.getResourceSize());
         Assert.assertTrue(IMPValidator.getPayloadType(payloadRecord) == PayloadRecord.PayloadAssetType.AssetMap);
 
         //PKL
         inputFile = TestHelper.findResourceByPath("TestIMP/NYCbCrLT_3840x2160x23.98x10min/PKL_0429fedd-b55d-442a-aa26-2a81ec71ed05.xml");
-        resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
+        resourceByteRangeProvider = inputFile.getResourceByteRangeProvider();
         bytes = resourceByteRangeProvider.getByteRangeAsBytes(0, resourceByteRangeProvider.getResourceSize()-1);
         payloadRecord = new PayloadRecord(bytes, PayloadRecord.PayloadAssetType.Unknown, 0L, resourceByteRangeProvider.getResourceSize());
         Assert.assertTrue(IMPValidator.getPayloadType(payloadRecord) == PayloadRecord.PayloadAssetType.PackingList);
 
         //CPL
         inputFile = TestHelper.findResourceByPath("TestIMP/NYCbCrLT_3840x2160x23.98x10min/CPL_a453b63a-cf4d-454a-8c34-141f560c0100.xml");
-        resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
+        resourceByteRangeProvider = inputFile.getResourceByteRangeProvider();
         bytes = resourceByteRangeProvider.getByteRangeAsBytes(0, resourceByteRangeProvider.getResourceSize()-1);
         payloadRecord = new PayloadRecord(bytes, PayloadRecord.PayloadAssetType.Unknown, 0L, resourceByteRangeProvider.getResourceSize());
         Assert.assertTrue(IMPValidator.getPayloadType(payloadRecord) == PayloadRecord.PayloadAssetType.CompositionPlaylist);
@@ -91,7 +86,7 @@ public class IMPValidatorFunctionalTests {
 
     @Test
     public void invalidPKLTest() throws IOException {
-        File inputFile = TestHelper.findResourceByPath("TestIMP/Netflix_Sony_Plugfest_2015/PKL_befcd2d4-f35c-45d7-99bb-7f64b51b103c.xml");
+        FileLocator inputFile = TestHelper.findResourceByPath("TestIMP/Netflix_Sony_Plugfest_2015/PKL_befcd2d4-f35c-45d7-99bb-7f64b51b103c.xml");
         ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
         byte[] bytes = resourceByteRangeProvider.getByteRangeAsBytes(0, resourceByteRangeProvider.getResourceSize()-1);
         PayloadRecord payloadRecord = new PayloadRecord(bytes, PayloadRecord.PayloadAssetType.PackingList, 0L, resourceByteRangeProvider.getResourceSize());
@@ -103,7 +98,7 @@ public class IMPValidatorFunctionalTests {
     @Test
     public void validAssetMapTest() throws IOException {
         //File inputFile = TestHelper.findResourceByPath("TestIMP/Netflix_Sony_Plugfest_2015/ASSETMAP.xml");
-        File inputFile = TestHelper.findResourceByPath("TestIMP/NYCbCrLT_3840x2160x23.98x10min/ASSETMAP.xml");
+        FileLocator inputFile = TestHelper.findResourceByPath("TestIMP/NYCbCrLT_3840x2160x23.98x10min/ASSETMAP.xml");
         ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
         byte[] bytes = resourceByteRangeProvider.getByteRangeAsBytes(0, resourceByteRangeProvider.getResourceSize()-1);
         PayloadRecord payloadRecord = new PayloadRecord(bytes, PayloadRecord.PayloadAssetType.AssetMap, 0L, resourceByteRangeProvider.getResourceSize());
@@ -113,7 +108,7 @@ public class IMPValidatorFunctionalTests {
 
     @Test
     public void invalidAssetMapTest() throws IOException {
-        File inputFile = TestHelper.findResourceByPath("TestIMP/NYCbCrLT_3840x2160x23.98x10min/ASSETMAP_ERROR.xml");
+        FileLocator inputFile = TestHelper.findResourceByPath("TestIMP/NYCbCrLT_3840x2160x23.98x10min/ASSETMAP_ERROR.xml");
         ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
         byte[] bytes = resourceByteRangeProvider.getByteRangeAsBytes(0, resourceByteRangeProvider.getResourceSize()-1);
         PayloadRecord payloadRecord = new PayloadRecord(bytes, PayloadRecord.PayloadAssetType.AssetMap, 0L, resourceByteRangeProvider.getResourceSize());
@@ -123,7 +118,7 @@ public class IMPValidatorFunctionalTests {
 
     @Test
     public void validPKLTest() throws IOException {
-        File inputFile = TestHelper.findResourceByPath("TestIMP/NYCbCrLT_3840x2160x23.98x10min/PKL_0429fedd-b55d-442a-aa26-2a81ec71ed05.xml");
+        FileLocator inputFile = TestHelper.findResourceByPath("TestIMP/NYCbCrLT_3840x2160x23.98x10min/PKL_0429fedd-b55d-442a-aa26-2a81ec71ed05.xml");
         ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
         byte[] bytes = resourceByteRangeProvider.getByteRangeAsBytes(0, resourceByteRangeProvider.getResourceSize()-1);
         PayloadRecord payloadRecord = new PayloadRecord(bytes, PayloadRecord.PayloadAssetType.PackingList, 0L, resourceByteRangeProvider.getResourceSize());
@@ -133,14 +128,14 @@ public class IMPValidatorFunctionalTests {
 
     @Test
     public void validPKLAndAssetMapTest() throws IOException {
-        File pklInputFile = TestHelper.findResourceByPath("TestIMP/NYCbCrLT_3840x2160x23.98x10min/PKL_0429fedd-b55d-442a-aa26-2a81ec71ed05.xml");
+        FileLocator pklInputFile = TestHelper.findResourceByPath("TestIMP/NYCbCrLT_3840x2160x23.98x10min/PKL_0429fedd-b55d-442a-aa26-2a81ec71ed05.xml");
         ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(pklInputFile);
         byte[] bytes = resourceByteRangeProvider.getByteRangeAsBytes(0, resourceByteRangeProvider.getResourceSize()-1);
         PayloadRecord pklPayloadRecord = new PayloadRecord(bytes, PayloadRecord.PayloadAssetType.PackingList, 0L, resourceByteRangeProvider.getResourceSize());
         List<PayloadRecord> pklPayloadRecordList = new ArrayList<>();
         pklPayloadRecordList.add(pklPayloadRecord);
 
-        File assetMapInputFile = TestHelper.findResourceByPath("TestIMP/NYCbCrLT_3840x2160x23.98x10min/ASSETMAP.xml");
+        FileLocator assetMapInputFile = TestHelper.findResourceByPath("TestIMP/NYCbCrLT_3840x2160x23.98x10min/ASSETMAP.xml");
         ResourceByteRangeProvider assetMapResourceByteRangeProvider = new FileByteRangeProvider(assetMapInputFile);
         byte[] assetMapBytes = assetMapResourceByteRangeProvider.getByteRangeAsBytes(0, assetMapResourceByteRangeProvider.getResourceSize()-1);
         PayloadRecord assetMapPayloadRecord = new PayloadRecord(assetMapBytes, PayloadRecord.PayloadAssetType.AssetMap, 0L, assetMapResourceByteRangeProvider.getResourceSize());
@@ -151,7 +146,7 @@ public class IMPValidatorFunctionalTests {
 
     @Test
     public void validCPLTest_2013Schema() throws IOException {
-        File inputFile = TestHelper.findResourceByPath("TestIMP/Netflix_Sony_Plugfest_2015/CPL_BLACKL_202_HD_REC709_178_LAS_8fad47bb-ab01-4f0d-a08c-d1e6c6cb62b4.xml");
+        FileLocator inputFile = TestHelper.findResourceByPath("TestIMP/Netflix_Sony_Plugfest_2015/CPL_BLACKL_202_HD_REC709_178_LAS_8fad47bb-ab01-4f0d-a08c-d1e6c6cb62b4.xml");
         ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
         byte[] bytes = resourceByteRangeProvider.getByteRangeAsBytes(0, resourceByteRangeProvider.getResourceSize()-1);
         PayloadRecord payloadRecord = new PayloadRecord(bytes, PayloadRecord.PayloadAssetType.CompositionPlaylist, 0L, resourceByteRangeProvider.getResourceSize());
@@ -163,7 +158,7 @@ public class IMPValidatorFunctionalTests {
 
     @Test
     public void invalidCPLTest_2013Schema() throws IOException {
-        File inputFile = TestHelper.findResourceByPath
+        FileLocator inputFile = TestHelper.findResourceByPath
                 ("TestIMP/Netflix_Sony_Plugfest_2015/CPL_BLACKL_202_HD_REC709_178_LAS_8fad47bb-ab01-4f0d-a08c" +
                         "-d1e6c6cb62b4_error.xml");
         ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
@@ -177,7 +172,7 @@ public class IMPValidatorFunctionalTests {
 
     @Test
     public void validCPLTest_2016Schema() throws IOException {
-        File inputFile = TestHelper.findResourceByPath("TestIMP/Netflix_Sony_Plugfest_2015/CPL_BLACKL_202_HD_REC709_178_ENG_fe8cf2f4-1bcd-4145-8f72-6775af4038c4-2016Schema.xml");
+        FileLocator inputFile = TestHelper.findResourceByPath("TestIMP/Netflix_Sony_Plugfest_2015/CPL_BLACKL_202_HD_REC709_178_ENG_fe8cf2f4-1bcd-4145-8f72-6775af4038c4-2016Schema.xml");
         ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
         byte[] bytes = resourceByteRangeProvider.getByteRangeAsBytes(0, resourceByteRangeProvider.getResourceSize()-1);
         PayloadRecord payloadRecord = new PayloadRecord(bytes, PayloadRecord.PayloadAssetType.CompositionPlaylist, 0L, resourceByteRangeProvider.getResourceSize());
@@ -189,7 +184,7 @@ public class IMPValidatorFunctionalTests {
 
     @Test
     public void getRandomIndexPackSizeTest() throws IOException {
-        File inputFile = TestHelper.findResourceByPath("IMFTrackFiles/TearsOfSteel_4k_Test_Master_Audio_002.mxf");
+        FileLocator inputFile = TestHelper.findResourceByPath("IMFTrackFiles/TearsOfSteel_4k_Test_Master_Audio_002.mxf");
 
         ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
         long archiveFileSize = resourceByteRangeProvider.getResourceSize();
@@ -203,7 +198,7 @@ public class IMPValidatorFunctionalTests {
 
     @Test
     public void getAllPartitionByteOffsetsTest() throws IOException {
-        File inputFile = TestHelper.findResourceByPath("IMFTrackFiles/TearsOfSteel_4k_Test_Master_Audio_002.mxf");
+        FileLocator inputFile = TestHelper.findResourceByPath("IMFTrackFiles/TearsOfSteel_4k_Test_Master_Audio_002.mxf");
 
         ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
         long archiveFileSize = resourceByteRangeProvider.getResourceSize();
@@ -233,7 +228,7 @@ public class IMPValidatorFunctionalTests {
     public void validateEssencesHeaderPartitionTest() throws IOException {
         List<PayloadRecord> essencesHeaderPartition = new ArrayList<>();
 
-        File inputFile = TestHelper.findResourceByPath("TestIMP/Netflix_Sony_Plugfest_2015/Netflix_Plugfest_Oct2015_ENG20.mxf.hdr");
+        FileLocator inputFile = TestHelper.findResourceByPath("TestIMP/Netflix_Sony_Plugfest_2015/Netflix_Plugfest_Oct2015_ENG20.mxf.hdr");
         ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
         byte[] bytes = resourceByteRangeProvider.getByteRangeAsBytes(0, resourceByteRangeProvider.getResourceSize()-1);
         PayloadRecord payloadRecord = new PayloadRecord(bytes, PayloadRecord.PayloadAssetType.EssencePartition, 0L, resourceByteRangeProvider.getResourceSize());
@@ -273,7 +268,7 @@ public class IMPValidatorFunctionalTests {
     @Test
     public void cplConformanceNegativeTest() throws IOException, SAXException, JAXBException, URISyntaxException {
 
-        File inputFile = TestHelper.findResourceByPath("TestIMP/Netflix_Sony_Plugfest_2015/CPL_BLACKL_202_HD_REC709_178_ENG_fe8cf2f4-1bcd-4145-8f72-6775af4038c4.xml");
+        FileLocator inputFile = TestHelper.findResourceByPath("TestIMP/Netflix_Sony_Plugfest_2015/CPL_BLACKL_202_HD_REC709_178_ENG_fe8cf2f4-1bcd-4145-8f72-6775af4038c4.xml");
         ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
 
         byte[] bytes = resourceByteRangeProvider.getByteRangeAsBytes(0, resourceByteRangeProvider.getResourceSize()-1);
@@ -308,7 +303,7 @@ public class IMPValidatorFunctionalTests {
     @Test
     public void cplVirtualTrackConformanceNegativeTest() throws IOException, SAXException, JAXBException, URISyntaxException {
 
-        File inputFile = TestHelper.findResourceByPath("TestIMP/Netflix_Sony_Plugfest_2015/CPL_BLACKL_202_HD_REC709_178_ENG_fe8cf2f4-1bcd-4145-8f72-6775af4038c4.xml");
+        FileLocator inputFile = TestHelper.findResourceByPath("TestIMP/Netflix_Sony_Plugfest_2015/CPL_BLACKL_202_HD_REC709_178_ENG_fe8cf2f4-1bcd-4145-8f72-6775af4038c4.xml");
         ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
 
         byte[] bytes = resourceByteRangeProvider.getByteRangeAsBytes(0, resourceByteRangeProvider.getResourceSize()-1);
@@ -349,7 +344,7 @@ public class IMPValidatorFunctionalTests {
     @Test
     public void cplVirtualTrackConformanceNegativeTestNamespaceURIInconsitencies() throws IOException, SAXException, JAXBException, URISyntaxException {
 
-        File inputFile = TestHelper.findResourceByPath("TestIMP/NYCbCrLT_3840x2160x23.98x10min/CPL-de6d2644-e84c-432d-98d5-98d89271d082.xml");
+        FileLocator inputFile = TestHelper.findResourceByPath("TestIMP/NYCbCrLT_3840x2160x23.98x10min/CPL-de6d2644-e84c-432d-98d5-98d89271d082.xml");
         ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
 
         byte[] bytes = resourceByteRangeProvider.getByteRangeAsBytes(0, resourceByteRangeProvider.getResourceSize()-1);
@@ -382,13 +377,13 @@ public class IMPValidatorFunctionalTests {
     @Test
     public void cplVirtualTrackConformancePositiveTest()
             throws IOException, ParserConfigurationException, SAXException, JAXBException, URISyntaxException, NoSuchAlgorithmException {
-        File inputFile = TestHelper.findResourceByPath("TestIMP/NYCbCrLT_3840x2160x23.98x10min/CPL_a453b63a-cf4d-454a-8c34-141f560c0100.xml");
+        FileLocator inputFile = TestHelper.findResourceByPath("TestIMP/NYCbCrLT_3840x2160x23.98x10min/CPL_a453b63a-cf4d-454a-8c34-141f560c0100.xml");
         ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
         Map<UUID, IMPBuilder.IMFTrackFileMetadata> imfTrackFileMetadataMap = new HashMap<>();
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
         ApplicationComposition applicationComposition = ApplicationCompositionFactory.getApplicationComposition(resourceByteRangeProvider, imfErrorLogger);
 
-        File headerPartition1 = TestHelper.findResourceByPath("TestIMP/NYCbCrLT_3840x2160x23.98x10min/NYCbCrLT_3840x2160x2chx24bitx30.03sec.mxf.hdr");
+        FileLocator headerPartition1 = TestHelper.findResourceByPath("TestIMP/NYCbCrLT_3840x2160x23.98x10min/NYCbCrLT_3840x2160x2chx24bitx30.03sec.mxf.hdr");
         resourceByteRangeProvider = new FileByteRangeProvider(headerPartition1);
         byte[] bytes = resourceByteRangeProvider.getByteRangeAsBytes(0, resourceByteRangeProvider.getResourceSize() - 1);
         ByteProvider byteProvider = new ByteArrayDataProvider(bytes);
@@ -410,7 +405,7 @@ public class IMPValidatorFunctionalTests {
                 bytes.length));
 
 
-        File headerPartition2 = TestHelper.findResourceByPath("TestIMP/NYCbCrLT_3840x2160x23.98x10min/NYCbCrLT_3840x2160x2398_full_full.mxf.hdr");
+        FileLocator headerPartition2 = TestHelper.findResourceByPath("TestIMP/NYCbCrLT_3840x2160x23.98x10min/NYCbCrLT_3840x2160x2398_full_full.mxf.hdr");
         resourceByteRangeProvider = new FileByteRangeProvider(headerPartition2);
         bytes = resourceByteRangeProvider.getByteRangeAsBytes(0, resourceByteRangeProvider.getResourceSize() - 1);
         byteProvider = new ByteArrayDataProvider(bytes);
@@ -497,8 +492,8 @@ public class IMPValidatorFunctionalTests {
     @Test
     public void cplMergeabilityNegativeTest() throws IOException {
 
-        File cpl1 = TestHelper.findResourceByPath("TestIMP/Netflix_Sony_Plugfest_2015/CPL_BLACKL_202_HD_REC709_178_ENG_fe8cf2f4-1bcd-4145-8f72-6775af4038c4.xml");
-        File cpl2 = TestHelper.findResourceByPath("TestIMP/Netflix_Sony_Plugfest_2015/CPL_BLACKL_202_HD_REC709_178_LAS_8fad47bb-ab01-4f0d-a08c-d1e6c6cb62b4_corrected.xml");
+        FileLocator cpl1 = TestHelper.findResourceByPath("TestIMP/Netflix_Sony_Plugfest_2015/CPL_BLACKL_202_HD_REC709_178_ENG_fe8cf2f4-1bcd-4145-8f72-6775af4038c4.xml");
+        FileLocator cpl2 = TestHelper.findResourceByPath("TestIMP/Netflix_Sony_Plugfest_2015/CPL_BLACKL_202_HD_REC709_178_LAS_8fad47bb-ab01-4f0d-a08c-d1e6c6cb62b4_corrected.xml");
 
         List<ErrorLogger.ErrorObject> errors = new ArrayList<>();
 
@@ -525,8 +520,8 @@ public class IMPValidatorFunctionalTests {
     @Test
     public void cplMergeabilityPositiveTest() throws IOException {
 
-        File cpl1 = TestHelper.findResourceByPath("TestIMP/Netflix_Sony_Plugfest_2015/CPL_BLACKL_202_HD_REC709_178_ENG_fe8cf2f4-1bcd-4145-8f72-6775af4038c4.xml");
-        File cpl2 = TestHelper.findResourceByPath("TestIMP/Netflix_Sony_Plugfest_2015/CPL_BLACKL_202_HD_REC709_178_ENG_fe8cf2f4-1bcd-4145-8f72-6775af4038c4_supplemental.xml");
+        FileLocator cpl1 = TestHelper.findResourceByPath("TestIMP/Netflix_Sony_Plugfest_2015/CPL_BLACKL_202_HD_REC709_178_ENG_fe8cf2f4-1bcd-4145-8f72-6775af4038c4.xml");
+        FileLocator cpl2 = TestHelper.findResourceByPath("TestIMP/Netflix_Sony_Plugfest_2015/CPL_BLACKL_202_HD_REC709_178_ENG_fe8cf2f4-1bcd-4145-8f72-6775af4038c4_supplemental.xml");
 
         List<ErrorLogger.ErrorObject> errors = new ArrayList<>();
 

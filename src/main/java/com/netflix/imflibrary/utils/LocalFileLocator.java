@@ -69,6 +69,10 @@ public class LocalFileLocator implements FileLocator {
         return new FileInputStream(this.file);
     }
 
+    public File getFile() {
+        return this.file;
+    }
+
     public long length() {
         return this.file.length();
     }

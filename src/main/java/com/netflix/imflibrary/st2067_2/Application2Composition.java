@@ -3,6 +3,7 @@ package com.netflix.imflibrary.st2067_2;
 import com.netflix.imflibrary.Colorimetry;
 import com.netflix.imflibrary.IMFErrorLogger;
 import com.netflix.imflibrary.st0377.header.UL;
+import com.netflix.imflibrary.st0422.JP2KContentKind;
 import com.netflix.imflibrary.st2067_2.ApplicationCompositionFactory.ApplicationCompositionType;
 import com.netflix.imflibrary.utils.Fraction;
 
@@ -24,6 +25,8 @@ import static com.netflix.imflibrary.st0377.header.GenericPictureEssenceDescript
  * A class that models Composition with Application 2 constraints from 2067-20 specification
  */
 public class Application2Composition extends AbstractApplicationComposition {
+    public static final String SCHEMA_URI_APP2_2013 = "http://www.smpte-ra.org/schemas/2067-20/2013";
+    public static final String SCHEMA_URI_APP2_2016 = "http://www.smpte-ra.org/schemas/2067-20/2016";
     public static final Integer MAX_IMAGE_FRAME_WIDTH = 1920;
     public static final Integer MAX_IMAGE_FRAME_HEIGHT = 1080;
     public static final Set<Fraction>progressiveSampleRateSupported = Collections.unmodifiableSet(new HashSet<Fraction>() {{
@@ -79,6 +82,7 @@ public class Application2Composition extends AbstractApplicationComposition {
             imfErrorLogger)
     {
         UUID imageEssenceDescriptorID = imageEssenceDescriptorModel.getImageEssencedescriptorID();
+
         ColorModel colorModel = imageEssenceDescriptorModel.getColorModel();
         if( colorModel.equals(ColorModel.Unknown)) {
             imfErrorLogger.addError(IMFErrorLogger.IMFErrors.ErrorCodes.APPLICATION_COMPOSITION_ERROR,
@@ -86,6 +90,14 @@ public class Application2Composition extends AbstractApplicationComposition {
                     String.format("EssenceDescriptor with ID %s has Invalid color components as per %s",
                             imageEssenceDescriptorID.toString(), applicationCompositionType.toString()));
             return;
+        }
+
+        Integer componentDepth = imageEssenceDescriptorModel.getComponentDepth();
+        if (colorModel.equals(ColorModel.YUV) && componentDepth == null) {
+            imfErrorLogger.addError(IMFErrorLogger.IMFErrors.ErrorCodes.APPLICATION_COMPOSITION_ERROR,
+                    IMFErrorLogger.IMFErrors.ErrorLevels.NON_FATAL,
+                    String.format("EssenceDescriptor with ID %s is missing component depth required per %s",
+                            imageEssenceDescriptorID.toString(), applicationCompositionType.toString()));
         }
 
         Integer storedWidth = imageEssenceDescriptorModel.getStoredWidth();
@@ -150,12 +162,12 @@ public class Application2Composition extends AbstractApplicationComposition {
         FrameLayoutType frameLayoutType = imageEssenceDescriptorModel.getFrameLayoutType();
         UL essenceContainerFormatUL = imageEssenceDescriptorModel.getEssenceContainerFormatUL();
         if(essenceContainerFormatUL != null) {
-            Byte contentKind = essenceContainerFormatUL.getULAsBytes()[14];
-            if ((frameLayoutType.equals(FrameLayoutType.FullFrame) && contentKind != 6) ||
-                    (frameLayoutType.equals(FrameLayoutType.SeparateFields) && contentKind != 3)) {
+            JP2KContentKind contentKind = JP2KContentKind.valueOf(essenceContainerFormatUL.getULAsBytes()[14]);
+            if ((frameLayoutType.equals(FrameLayoutType.FullFrame) && !contentKind.equals(JP2KContentKind.P1)) ||
+                    (frameLayoutType.equals(FrameLayoutType.SeparateFields) && !contentKind.equals(JP2KContentKind.I1))) {
                 imfErrorLogger.addError(IMFErrorLogger.IMFErrors.ErrorCodes.APPLICATION_COMPOSITION_ERROR,
                         IMFErrorLogger.IMFErrors.ErrorLevels.NON_FATAL,
-                        String.format("EssenceDescriptor with ID %s has invalid ContentKind(%d) indicated by the ContainerFormat as per %s",
+                        String.format("EssenceDescriptor with ID %s has invalid JPEG-2000 ContentKind (%s) indicated by the ContainerFormat as per %s",
                                 imageEssenceDescriptorID.toString(), contentKind, applicationCompositionType.toString()));
             }
         }
@@ -201,6 +213,13 @@ public class Application2Composition extends AbstractApplicationComposition {
                     IMFErrorLogger.IMFErrors.ErrorLevels.NON_FATAL,
                     String.format("EssenceDescriptor with ID %s invalid PixelBitDepth(%d) as per %s",
                             imageEssenceDescriptorID.toString(), pixelBitDepth, applicationCompositionType.toString()));
+        }
+        Integer componentDepth = imageEssenceDescriptorModel.getComponentDepth();
+        if (colorModel.equals(ColorModel.YUV) && !pixelBitDepth.equals(componentDepth)) {
+            imfErrorLogger.addError(IMFErrorLogger.IMFErrors.ErrorCodes.APPLICATION_COMPOSITION_ERROR,
+                    IMFErrorLogger.IMFErrors.ErrorLevels.NON_FATAL,
+                    String.format("EssenceDescriptor with ID %s has a PixelBitDepth(%d) not matching Component Depth (%d) as per %s",
+                            imageEssenceDescriptorID.toString(), pixelBitDepth, componentDepth, applicationCompositionType.toString()));
         }
 
         //FrameLayout

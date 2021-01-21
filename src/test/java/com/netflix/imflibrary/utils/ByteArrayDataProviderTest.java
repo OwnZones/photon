@@ -31,7 +31,7 @@ import java.util.Arrays;
 @Test(groups = "unit")
 public class ByteArrayDataProviderTest
 {
-    File inputFile;
+    FileLocator inputFile;
     InputStream inputStream;
 
     @BeforeClass
@@ -41,9 +41,9 @@ public class ByteArrayDataProviderTest
     }
 
     @BeforeMethod
-    public void beforeMethod() throws FileNotFoundException
+    public void beforeMethod() throws IOException
     {
-        inputStream = new FileInputStream(inputFile);
+        inputStream = inputFile.getInputStream();
     }
 
     @AfterMethod

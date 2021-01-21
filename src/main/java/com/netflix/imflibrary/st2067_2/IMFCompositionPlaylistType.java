@@ -25,7 +25,6 @@ import com.netflix.imflibrary.utils.ErrorLogger;
 import com.netflix.imflibrary.utils.ResourceByteRangeProvider;
 import com.netflix.imflibrary.utils.UUIDHelper;
 import com.netflix.imflibrary.utils.Utilities;
-import com.netflix.imflibrary.writerTools.utils.ValidationEventHandlerImpl;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.ErrorHandler;
@@ -33,22 +32,18 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
-import javax.xml.XMLConstants;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * A class that models an IMF Composition Playlist structure.
@@ -65,8 +60,30 @@ final class IMFCompositionPlaylistType {
     private final List<IMFSegmentType> segmentList;
     private final List<IMFEssenceDescriptorBaseType> essenceDescriptorList;
     private final IMFErrorLogger imfErrorLogger;
-    private final String coreConstraintsVersion;
-    private final String applicationId;
+    private final String coreConstraintsSchema;
+    private final Set<String> applicationIdSet;
+
+    /**
+     * @deprecated
+     * This constructor is the legacy constructor, it uses a single String for the application id
+     * but a CPL may declare that it conforms to multiple application ids.
+     * The constructor using a Set should be preferred.
+     */
+    @Deprecated
+    public IMFCompositionPlaylistType(String id,
+                                      List<Long> editRate,
+                                      String annotation,
+                                      String issuer,
+                                      String creator,
+                                      String contentOriginator,
+                                      String contentTitle,
+                                      List<IMFSegmentType> segmentList,
+                                      List<IMFEssenceDescriptorBaseType> essenceDescriptorList,
+                                      String coreConstraintsSchema,
+                                      String applicationId)
+    {
+        this(id, editRate, annotation, issuer, creator, contentOriginator, contentTitle, segmentList, essenceDescriptorList, coreConstraintsSchema, (applicationId == null ? new HashSet<>() : new HashSet<String>(Arrays.asList(applicationId))));
+    }
 
     public IMFCompositionPlaylistType(String id,
                                    List<Long> editRate,
@@ -77,8 +94,8 @@ final class IMFCompositionPlaylistType {
                                    String contentTitle,
                                    List<IMFSegmentType> segmentList,
                                    List<IMFEssenceDescriptorBaseType> essenceDescriptorList,
-                                   String coreConstraintsVersion,
-                                   String applicationId)
+                                   String coreConstraintsSchema,
+                                   @Nonnull Set<String> applicationIds)
     {
         this.id                = UUIDHelper.fromUUIDAsURNStringToUUID(id);
         Composition.EditRate rate = null;
@@ -98,10 +115,10 @@ final class IMFCompositionPlaylistType {
         this.creator           = creator;
         this.contentOriginator = contentOriginator;
         this.contentTitle      = contentTitle;
-        this.segmentList       = segmentList;
-        this.essenceDescriptorList  = essenceDescriptorList;
-        this.coreConstraintsVersion = coreConstraintsVersion;
-        this.applicationId          = applicationId;
+        this.segmentList       = Collections.unmodifiableList(segmentList);
+        this.essenceDescriptorList  = Collections.unmodifiableList(essenceDescriptorList);
+        this.coreConstraintsSchema = coreConstraintsSchema;
+        this.applicationIdSet = Collections.unmodifiableSet(applicationIds);
 
         if(imfErrorLogger.hasFatalErrors())
         {
@@ -109,37 +126,12 @@ final class IMFCompositionPlaylistType {
         }
     }
 
-    private static class CoreConstraintsSchemas {
-        private final String coreConstraintsSchemaPath;
-        private final String coreConstraintsContext;
-
-        private CoreConstraintsSchemas(String coreConstraintsSchemaPath, String coreConstraintsContext) {
-            this.coreConstraintsSchemaPath = coreConstraintsSchemaPath;
-            this.coreConstraintsContext = coreConstraintsContext;
-        }
-
-        private String getCoreConstraintsSchemaPath() {
-            return this.coreConstraintsSchemaPath;
-        }
-
-        private String getCoreConstraintsContext() {
-            return this.coreConstraintsContext;
-        }
-    }
-    private static final List<CoreConstraintsSchemas> supportedIMFCoreConstraintsSchemas = Collections.unmodifiableList
-            (new ArrayList<CoreConstraintsSchemas>() {{
-                add(new CoreConstraintsSchemas("org/smpte_ra/schemas/st2067_2_2013/imf-core-constraints-20130620-pal.xsd", "org.smpte_ra.schemas.st2067_2_2013"));
-                add(new CoreConstraintsSchemas("org/smpte_ra/schemas/st2067_2_2016/imf-core-constraints-20160411.xsd", "org.smpte_ra.schemas.st2067_2_2016"));
-            }});
-
-    private static final String dcmlTypes_schema_path = "org/smpte_ra/schemas/st0433_2008/dcmlTypes/dcmlTypes.xsd";
-    private static final String xmldsig_core_schema_path = "org/w3/_2000_09/xmldsig/xmldsig-core-schema.xsd";
     private static final Set<String> supportedCPLSchemaURIs = Collections.unmodifiableSet(new HashSet<String>() {{
         add("http://www.smpte-ra.org/schemas/2067-3/2013");
         add("http://www.smpte-ra.org/schemas/2067-3/2016");
     }});
 
-    @Nullable
+    @Nonnull
     private static final String getCompositionNamespaceURI(ResourceByteRangeProvider resourceByteRangeProvider, @Nonnull IMFErrorLogger imfErrorLogger) throws IOException {
 
         String result = "";
@@ -193,41 +185,6 @@ final class IMFCompositionPlaylistType {
         return result;
     }
 
-    private static final String getCPLNamespaceVersion(String namespaceURI) {
-        String[] uriComponents = namespaceURI.split("/");
-        String namespaceVersion = uriComponents[uriComponents.length - 1];
-        return namespaceVersion;
-    }
-
-    private static final String serializeIMFCoreConstaintsSchemasToString(List<CoreConstraintsSchemas> coreConstraintsSchemas) {
-        StringBuilder stringBuilder = new StringBuilder();
-        for (CoreConstraintsSchemas coreConstraintsSchema : coreConstraintsSchemas) {
-            stringBuilder.append(String.format("%n"));
-            stringBuilder.append(coreConstraintsSchema.getCoreConstraintsContext());
-        }
-        return stringBuilder.toString();
-    }
-
-    private static final String getIMFCPLSchemaPath(String namespaceVersion, @Nonnull IMFErrorLogger imfErrorLogger) {
-        String imf_cpl_schema_path;
-        switch (namespaceVersion) {
-            case "2013":
-                imf_cpl_schema_path = "org/smpte_ra/schemas/st2067_3_2013/imf-cpl.xsd";
-                break;
-            case "2016":
-                imf_cpl_schema_path = "org/smpte_ra/schemas/st2067_3_2016/imf-cpl-20160411.xsd";
-                break;
-            default:
-                String message = String.format("Please check the CPL document and namespace URI, currently we " +
-                        "only support the following schema URIs %s", Utilities.serializeObjectCollectionToString
-                        (supportedCPLSchemaURIs));
-                imfErrorLogger.addError(IMFErrorLogger.IMFErrors.ErrorCodes.IMF_CPL_ERROR, IMFErrorLogger.IMFErrors
-                                .ErrorLevels.FATAL,
-                        message);
-                throw new IMFException(message, imfErrorLogger);
-        }
-        return imf_cpl_schema_path;
-    }
 
     /**
      * A method that confirms if the inputStream corresponds to a Composition document instance.
@@ -259,99 +216,33 @@ final class IMFCompositionPlaylistType {
         return false;
     }
 
-    public static IMFCompositionPlaylistType getCompositionPlayListType(ResourceByteRangeProvider resourceByteRangeProvider, IMFErrorLogger imfErrorLogger) throws IOException {
-        String imf_cpl_schema_path = "";
-        try {
-            String cplNameSpaceURI = getCompositionNamespaceURI(resourceByteRangeProvider, imfErrorLogger);
+    public static IMFCompositionPlaylistType getCompositionPlayListType(ResourceByteRangeProvider resourceByteRangeProvider, IMFErrorLogger imfErrorLogger) throws IOException
+    {
+        // Determine which version of the CPL namespace is being used
+        String cplNamespace = getCompositionNamespaceURI(resourceByteRangeProvider, imfErrorLogger);
 
-            String namespaceVersion = getCPLNamespaceVersion(cplNameSpaceURI);
-            imf_cpl_schema_path = getIMFCPLSchemaPath(namespaceVersion, imfErrorLogger);
-        }
-        catch(IMFException e)
+        if (cplNamespace.equals("http://www.smpte-ra.org/schemas/2067-3/2013"))
         {
-            imfErrorLogger.addAllErrors(e.getErrors());
-            throw new IMFException("Composition creation failed", imfErrorLogger);
+            org.smpte_ra.schemas.st2067_2_2013.CompositionPlaylistType jaxbCpl
+                    = CompositionModel_st2067_2_2013.unmarshallCpl(resourceByteRangeProvider, imfErrorLogger);
+
+            return CompositionModel_st2067_2_2013.getCompositionPlaylist(jaxbCpl, imfErrorLogger);
         }
+        else if (cplNamespace.equals("http://www.smpte-ra.org/schemas/2067-3/2016"))
+        {
+            org.smpte_ra.schemas.st2067_2_2016.CompositionPlaylistType jaxbCpl
+                    = CompositionModel_st2067_2_2016.unmarshallCpl(resourceByteRangeProvider, imfErrorLogger);
 
-        CoreConstraintsSchemas coreConstraintsSchema = supportedIMFCoreConstraintsSchemas.get(0);
-        JAXBElement jaxbElement = null;
-
-        for (int i = 0; i < supportedIMFCoreConstraintsSchemas.size(); i++) {
-            ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-            try (InputStream inputStream = resourceByteRangeProvider.getByteRangeAsStream(0, resourceByteRangeProvider.getResourceSize() - 1);
-                 InputStream xmldsig_core_is = contextClassLoader.getResourceAsStream(xmldsig_core_schema_path);
-                 InputStream dcmlTypes_is = contextClassLoader.getResourceAsStream(dcmlTypes_schema_path);
-                 InputStream imf_cpl_is = contextClassLoader.getResourceAsStream(imf_cpl_schema_path);
-                 InputStream imf_core_constraints_is = contextClassLoader.getResourceAsStream(supportedIMFCoreConstraintsSchemas.get(i).coreConstraintsSchemaPath);) {
-                StreamSource[] streamSources = new StreamSource[4];
-                streamSources[0] = new StreamSource(xmldsig_core_is);
-                streamSources[1] = new StreamSource(dcmlTypes_is);
-                streamSources[2] = new StreamSource(imf_cpl_is);
-                streamSources[3] = new StreamSource(imf_core_constraints_is);
-
-                SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-                Schema schema = schemaFactory.newSchema(streamSources);
-
-                ValidationEventHandlerImpl validationEventHandlerImpl = new ValidationEventHandlerImpl(true);
-                JAXBContext jaxbContext = JAXBContext.newInstance(supportedIMFCoreConstraintsSchemas.get(i).coreConstraintsContext);
-                Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-                unmarshaller.setEventHandler(validationEventHandlerImpl);
-                unmarshaller.setSchema(schema);
-
-                jaxbElement = (JAXBElement) unmarshaller.unmarshal(inputStream);
-                coreConstraintsSchema = supportedIMFCoreConstraintsSchemas.get(i);
-
-                if (validationEventHandlerImpl.hasErrors()) {
-                    validationEventHandlerImpl.getErrors().stream()
-                            .map(e -> new ErrorLogger.ErrorObject(
-                                    IMFErrorLogger.IMFErrors.ErrorCodes.IMF_CPL_ERROR,
-                                    e.getValidationEventSeverity(),
-                                    "Line Number : " + e.getLineNumber().toString() + " - " + e.getErrorMessage())
-                            )
-                            .forEach(imfErrorLogger::addError);
-
-                    throw new IMFException(validationEventHandlerImpl.toString(), imfErrorLogger);
-                }
-                break; //No errors so we can break out without trying other Core constraints schema namespaces.
-            } catch (SAXException | JAXBException e) {
-                if (i == supportedIMFCoreConstraintsSchemas.size() - 1) {
-                    imfErrorLogger.addError(IMFErrorLogger.IMFErrors.ErrorCodes.IMF_CPL_ERROR, IMFErrorLogger
-                                    .IMFErrors.ErrorLevels.FATAL,
-                            e.getMessage());
-                    throw new IMFException(e.getMessage(), imfErrorLogger);
-                }
-            }
+            return CompositionModel_st2067_2_2016.getCompositionPlaylist(jaxbCpl, imfErrorLogger);
         }
-
-        String coreConstraintsVersion = coreConstraintsSchema.getCoreConstraintsContext();
-        IMFCompositionPlaylistType compositionPlaylistType = null;
-
-        switch (coreConstraintsVersion) {
-            case "org.smpte_ra.schemas.st2067_2_2013": {
-                org.smpte_ra.schemas.st2067_2_2013.CompositionPlaylistType compositionPlaylistTypeJaxb =
-                        (org.smpte_ra.schemas.st2067_2_2013.CompositionPlaylistType) jaxbElement.getValue();
-
-                compositionPlaylistType = CompositionModel_st2067_2_2013.getCompositionPlaylist(compositionPlaylistTypeJaxb,
-                        imfErrorLogger);
-            }
-            break;
-            case "org.smpte_ra.schemas.st2067_2_2016": {
-                org.smpte_ra.schemas.st2067_2_2016.CompositionPlaylistType compositionPlaylistTypeJaxb = (org.smpte_ra.schemas.st2067_2_2016.CompositionPlaylistType) jaxbElement.getValue();
-
-                compositionPlaylistType = CompositionModel_st2067_2_2016.getCompositionPlaylist(compositionPlaylistTypeJaxb, imfErrorLogger);
-            }
-            break;
-            default:
-                String message = String.format("Please check the CPL document, currently we only support the " +
-                        "following CoreConstraints schema URIs %s", serializeIMFCoreConstaintsSchemasToString
-                        (supportedIMFCoreConstraintsSchemas));
-                imfErrorLogger.addError(IMFErrorLogger.IMFErrors.ErrorCodes.IMF_CPL_ERROR, IMFErrorLogger
-                        .IMFErrors.ErrorLevels.FATAL, message);
-                throw new IMFException(message, imfErrorLogger);
-
+        else
+        {
+            String message = String.format("Please check the CPL document and namespace URI, currently we " +
+                    "only support the following schema URIs %s", supportedCPLSchemaURIs);
+            imfErrorLogger.addError(IMFErrorLogger.IMFErrors.ErrorCodes.IMF_CPL_ERROR, IMFErrorLogger
+                    .IMFErrors.ErrorLevels.FATAL, message);
+            throw new IMFException(message, imfErrorLogger);
         }
-
-        return compositionPlaylistType;
     }
 
     /**
@@ -427,21 +318,37 @@ final class IMFCompositionPlaylistType {
     }
 
     /**
-     * Getter for the CoreConstraintsURI corresponding to this CompositionPlaylist
+     * Getter for the CoreConstraints URI corresponding to this CompositionPlaylist
      *
      * @return the uri for the CoreConstraints schema for this CompositionPlaylist
      */
-    public String getCoreConstraintsVersion() {
-        return this.coreConstraintsVersion;
+    @Nonnull public String getCoreConstraintsSchema() {
+        return this.coreConstraintsSchema;
     }
 
     /**
      * Getter for the ApplicationIdentification corresponding to this CompositionPlaylist
      *
      * @return a string representing ApplicationIdentification for this CompositionPlaylist
+     *
+     * @deprecated
+     * A CPL may declare multiple Application identifiers, the getter that returns a Set should be used instead.
      */
+    @Deprecated
     public String getApplicationIdentification() {
-        return this.applicationId;
+        if (this.applicationIdSet.size() > 0) {
+            return this.applicationIdSet.iterator().next();
+        } else {
+            return "";
+        }
     }
 
+    /**
+     * Getter for the ApplicationIdentification Set corresponding to this CompositionPlaylist
+     *
+     * @return a set of all the strings representing ApplicationIdentification for this CompositionPlaylist
+     */
+    public Set<String> getApplicationIdentificationSet() {
+        return this.applicationIdSet;
+    }
 }

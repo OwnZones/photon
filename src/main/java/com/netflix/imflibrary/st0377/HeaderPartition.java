@@ -23,18 +23,25 @@ import com.netflix.imflibrary.IMFErrorLogger;
 import com.netflix.imflibrary.KLVPacket;
 import com.netflix.imflibrary.MXFPropertyPopulator;
 import com.netflix.imflibrary.MXFUID;
+import com.netflix.imflibrary.RESTfulInterfaces.IMPValidator;
+import com.netflix.imflibrary.RESTfulInterfaces.PayloadRecord;
 import com.netflix.imflibrary.exceptions.MXFException;
 import com.netflix.imflibrary.st0377.header.AudioChannelLabelSubDescriptor;
 import com.netflix.imflibrary.st0377.header.CDCIPictureEssenceDescriptor;
 import com.netflix.imflibrary.st0377.header.ContentStorage;
+import com.netflix.imflibrary.st0377.header.DMFramework;
+import com.netflix.imflibrary.st0377.header.DescriptiveMarkerSegment;
 import com.netflix.imflibrary.st0377.header.EssenceContainerData;
 import com.netflix.imflibrary.st0377.header.GenericDescriptor;
 import com.netflix.imflibrary.st0377.header.GenericPackage;
 import com.netflix.imflibrary.st0377.header.GenericPictureEssenceDescriptor;
+import com.netflix.imflibrary.st0377.header.GenericStreamTextBasedSet;
 import com.netflix.imflibrary.st0377.header.GenericTrack;
+import com.netflix.imflibrary.st0377.header.GroupOfSoundFieldGroupLabelSubDescriptor;
 import com.netflix.imflibrary.st0377.header.InterchangeObject;
 import com.netflix.imflibrary.st0377.header.JPEG2000PictureSubDescriptor;
 import com.netflix.imflibrary.st0377.header.ACESPictureSubDescriptor;
+import com.netflix.imflibrary.st0377.header.StaticTrack;
 import com.netflix.imflibrary.st0377.header.TargetFrameSubDescriptor;
 import com.netflix.imflibrary.st0377.header.MaterialPackage;
 import com.netflix.imflibrary.st0377.header.PHDRMetaDataTrackSubDescriptor;
@@ -46,19 +53,24 @@ import com.netflix.imflibrary.st0377.header.SourceClip;
 import com.netflix.imflibrary.st0377.header.SourcePackage;
 import com.netflix.imflibrary.st0377.header.StructuralComponent;
 import com.netflix.imflibrary.st0377.header.StructuralMetadata;
+import com.netflix.imflibrary.st0377.header.TextBasedDMFramework;
+import com.netflix.imflibrary.st0377.header.TextBasedObject;
 import com.netflix.imflibrary.st0377.header.TimeTextResourceSubDescriptor;
 import com.netflix.imflibrary.st0377.header.TimedTextDescriptor;
 import com.netflix.imflibrary.st0377.header.TimelineTrack;
 import com.netflix.imflibrary.st0377.header.WaveAudioEssenceDescriptor;
 import com.netflix.imflibrary.st2067_2.AudioContentKind;
 import com.netflix.imflibrary.st2067_2.Composition;
-import com.netflix.imflibrary.utils.ByteProvider;
-import com.netflix.imflibrary.utils.ErrorLogger;
+import com.netflix.imflibrary.st2067_201.IABEssenceDescriptor;
+import com.netflix.imflibrary.st2067_201.IABSoundfieldLabelSubDescriptor;
+import com.netflix.imflibrary.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -162,7 +174,7 @@ public final class HeaderPartition
             byte[] key = Arrays.copyOf(header.getKey(), header.getKey().length);
             numBytesRead += header.getKLSize();
 
-            if (StructuralMetadata.isStructuralMetadata(Arrays.copyOf(header.getKey(), header.getKey().length)))
+            if (StructuralMetadata.isStructuralMetadata(Arrays.copyOf(header.getKey(), header.getKey().length)) || StructuralMetadata.isDescriptiveMetadata(Arrays.copyOf(header.getKey(), header.getKey().length)))
             {
                 Class clazz = StructuralMetadata.getStructuralMetadataSetClass(key);
                 if(!clazz.getSimpleName().equals(Object.class.getSimpleName())){
@@ -293,6 +305,18 @@ public final class HeaderPartition
                         TimelineTrack timelineTrack = new TimelineTrack((TimelineTrack.TimelineTrackBO) interchangeObjectBO, sequence);
                         this.cacheInterchangeObject(timelineTrack);
                         uidToMetadataSets.put(interchangeObjectBO.getInstanceUID(), timelineTrack);
+                    }
+
+                } else if (interchangeObjectBO.getClass().getEnclosingClass().equals(StaticTrack.class)) {
+                    Sequence sequence = null;
+                    for (Node dependent : node.depends) {
+                        InterchangeObject dependentInterchangeObject = uidToMetadataSets.get(dependent.uid);
+                        if (dependentInterchangeObject instanceof Sequence) {
+                            sequence = (Sequence) dependentInterchangeObject;
+                        }
+                        StaticTrack staticTrack = new StaticTrack((StaticTrack.StaticTrackBO) interchangeObjectBO, sequence);
+                        this.cacheInterchangeObject(staticTrack);
+                        uidToMetadataSets.put(interchangeObjectBO.getInstanceUID(), staticTrack);
                     }
 
                 } else if (interchangeObjectBO.getClass().getEnclosingClass().equals(SourcePackage.class)) {
@@ -431,6 +455,10 @@ public final class HeaderPartition
                     WaveAudioEssenceDescriptor waveAudioEssenceDescriptor = new WaveAudioEssenceDescriptor((WaveAudioEssenceDescriptor.WaveAudioEssenceDescriptorBO) interchangeObjectBO);
                     this.cacheInterchangeObject(waveAudioEssenceDescriptor);
                     uidToMetadataSets.put(interchangeObjectBO.getInstanceUID(), waveAudioEssenceDescriptor);
+                } else if(interchangeObjectBO.getClass().getEnclosingClass().equals(IABEssenceDescriptor.class)){
+                    IABEssenceDescriptor iabEssenceDescriptor = new IABEssenceDescriptor((IABEssenceDescriptor.IABEssenceDescriptorBO) interchangeObjectBO);
+                    this.cacheInterchangeObject(iabEssenceDescriptor);
+                    uidToMetadataSets.put(interchangeObjectBO.getInstanceUID(), iabEssenceDescriptor);
                 } else if(interchangeObjectBO.getClass().getEnclosingClass().equals(TimedTextDescriptor.class)){
                     List<TimeTextResourceSubDescriptor> subDescriptorList = new ArrayList<>();
                     for(Node dependent : node.depends) {
@@ -442,6 +470,28 @@ public final class HeaderPartition
                     TimedTextDescriptor timedTextDescriptor = new TimedTextDescriptor((TimedTextDescriptor.TimedTextDescriptorBO) interchangeObjectBO, subDescriptorList);
                     this.cacheInterchangeObject(timedTextDescriptor);
                     uidToMetadataSets.put(interchangeObjectBO.getInstanceUID(), timedTextDescriptor);
+                } else if(interchangeObjectBO.getClass().getEnclosingClass().equals(TextBasedDMFramework.class)){
+                    TextBasedObject textBasedObject = null;
+                    for(Node dependent : node.depends) {
+                        InterchangeObject dependentInterchangeObject = uidToMetadataSets.get(dependent.uid);
+                        if(dependentInterchangeObject instanceof TextBasedObject) {
+                            textBasedObject = (TextBasedObject)dependentInterchangeObject;
+                        }
+                    }
+                    TextBasedDMFramework textBasedDMFramework = new TextBasedDMFramework((TextBasedDMFramework.TextBasedDMFrameworkBO) interchangeObjectBO, textBasedObject);
+                    this.cacheInterchangeObject(textBasedDMFramework);
+                    uidToMetadataSets.put(interchangeObjectBO.getInstanceUID(), textBasedDMFramework);
+                } else if(interchangeObjectBO.getClass().getEnclosingClass().equals(DescriptiveMarkerSegment.class)){
+                    DMFramework dmFramework = null;
+                    for(Node dependent : node.depends) {
+                        InterchangeObject dependentInterchangeObject = uidToMetadataSets.get(dependent.uid);
+                        if(dependentInterchangeObject instanceof TextBasedDMFramework) {
+                            dmFramework = (TextBasedDMFramework)dependentInterchangeObject;
+                        }
+                    }
+                    DescriptiveMarkerSegment descriptiveMarkerSegment = new DescriptiveMarkerSegment((DescriptiveMarkerSegment.DescriptiveMarkerSegmentBO) interchangeObjectBO, dmFramework);
+                    this.cacheInterchangeObject(descriptiveMarkerSegment);
+                    uidToMetadataSets.put(interchangeObjectBO.getInstanceUID(), descriptiveMarkerSegment);
                 }
             }
         }
@@ -689,6 +739,16 @@ public final class HeaderPartition
                     throw new MXFException(String.format("Language Codes (%s, %s) do not match across SoundFieldGroupLabelSubdescriptors and AudioChannelLabelSubDescriptors", rfc5646SpokenLanguage, audioChannelLabelSubDescriptor.getRFC5646SpokenLanguage()));
                 }
             }*/
+        } else if (this.hasIABEssenceDescriptor()) {
+            List<InterchangeObject> iabSoundFieldLabelSubDescriptors = this.getIABSoundFieldLabelSubDescriptors();
+            for (InterchangeObject subDescriptor : iabSoundFieldLabelSubDescriptors) {
+                IABSoundfieldLabelSubDescriptor iabSoundfieldLabelSubDescriptor = (IABSoundfieldLabelSubDescriptor) subDescriptor;
+                if (rfc5646SpokenLanguage == null) {
+                    rfc5646SpokenLanguage = iabSoundfieldLabelSubDescriptor.getRFC5646SpokenLanguage();
+                } else if (!rfc5646SpokenLanguage.equals(iabSoundfieldLabelSubDescriptor.getRFC5646SpokenLanguage())) {
+                    this.imfErrorLogger.addError(IMFErrorLogger.IMFErrors.ErrorCodes.IMF_ESSENCE_COMPONENT_ERROR, IMFErrorLogger.IMFErrors.ErrorLevels.NON_FATAL, String.format("Language Codes (%s, %s) do not match across the IABSoundFieldLabelSubDescriptors", rfc5646SpokenLanguage, iabSoundfieldLabelSubDescriptor.getRFC5646SpokenLanguage()));
+                }
+            }
         }
         return rfc5646SpokenLanguage;
     }
@@ -725,7 +785,7 @@ public final class HeaderPartition
         Map<Long, AudioChannelLabelSubDescriptor> audioChannelLabelSubDescriptorMap = new HashMap<>();
         subDescriptors.stream()
                 .map(e -> AudioChannelLabelSubDescriptor.class.cast(e))
-                .forEach(e -> audioChannelLabelSubDescriptorMap.put(e.getMCAChannelId() == null? 1 : e.getMCAChannelId(), e));
+                .forEach(e -> audioChannelLabelSubDescriptorMap.put(e.getMCAChannelId() == null? Long.valueOf(1L) : e.getMCAChannelId(), e));
         return audioChannelLabelSubDescriptorMap;
     }
 
@@ -746,6 +806,15 @@ public final class HeaderPartition
     public boolean hasWaveAudioEssenceDescriptor()
     {
         return this.hasInterchangeObject(WaveAudioEssenceDescriptor.class);
+    }
+
+    /**
+     * Checks if this HeaderPartition object has a IAB Essence Descriptor
+     * @return true/false depending on whether this HeaderPartition contains a IABEssenceDescriptor or not
+     */
+    public boolean hasIABEssenceDescriptor()
+    {
+        return this.hasInterchangeObject(IABEssenceDescriptor.class);
     }
 
     /**
@@ -823,6 +892,15 @@ public final class HeaderPartition
     public List<InterchangeObject> getSoundFieldGroupLabelSubDescriptors()
     {
         return this.getInterchangeObjects(SoundFieldGroupLabelSubDescriptor.class);
+    }
+
+    /**
+     * Gets all the IAB Soundfield Label SubDescriptors associated with this HeaderPartition object
+     * @return list of IAB Soundfield Label SubDescriptor contained in this header partition
+     */
+    public List<InterchangeObject> getIABSoundFieldLabelSubDescriptors()
+    {
+        return this.getInterchangeObjects(IABSoundfieldLabelSubDescriptor.class);
     }
 
     /**
@@ -1226,6 +1304,9 @@ public final class HeaderPartition
             if(interchangeObjectBO.getClass().getEnclosingClass().equals(WaveAudioEssenceDescriptor.class)){
                 essenceTypes.add(EssenceTypeEnum.MainAudioEssence);
             }
+            if(interchangeObjectBO.getClass().getEnclosingClass().equals(IABEssenceDescriptor.class)){
+                essenceTypes.add(EssenceTypeEnum.IABEssence);
+            }
             else if(interchangeObjectBO.getClass().getEnclosingClass().equals(CDCIPictureEssenceDescriptor.class)){
                 essenceTypes.add(EssenceTypeEnum.MainImageEssence);
             }
@@ -1260,6 +1341,7 @@ public final class HeaderPartition
         CommentaryEssence(Composition.SequenceTypeEnum.CommentarySequence),
         KaraokeEssence(Composition.SequenceTypeEnum.CommentarySequence),
         AncillaryDataEssence(Composition.SequenceTypeEnum.AncillaryDataSequence),
+        IABEssence(Composition.SequenceTypeEnum.IABSequence),
         UnsupportedEssence(Composition.SequenceTypeEnum.UnsupportedSequence);
 
         private final Composition.SequenceTypeEnum sequenceType;
@@ -1293,6 +1375,8 @@ public final class HeaderPartition
                     return KaraokeEssence;
                 case "AncillaryDataEssence":
                     return AncillaryDataEssence;
+                case "IABEssence":
+                    return IABEssence;
                 case "UnsupportedEssence":
                 default:
                     return UnsupportedEssence;
@@ -1321,6 +1405,8 @@ public final class HeaderPartition
                     return "KaraokeEssence";
                 case AncillaryDataSequence:
                     return "AncillaryDataEssence";
+                case IABSequence:
+                    return "IABEssence";
                 case UnsupportedSequence:
                 default:
                     return "UnsupportedEssence";
@@ -1373,4 +1459,86 @@ public final class HeaderPartition
         }
         return sb.toString();
     }
+
+    /**
+     * A static method to get the Header Partition from a file
+     * @param resourceByteRangeProvider source byte range provider to get the Header Partition from
+     * @param imfErrorLogger logging object
+     * @return an HeaderPartition object constructed from the file
+     * @throws IOException any I/O related error will be exposed through an IOException
+     */
+    public static HeaderPartition fromByteRangeProvider(ResourceByteRangeProvider resourceByteRangeProvider, IMFErrorLogger imfErrorLogger) throws IOException {
+        long archiveFileSize = resourceByteRangeProvider.getResourceSize();
+        long rangeEnd = archiveFileSize - 1;
+        long rangeStart = archiveFileSize - 4;
+        byte[] bytes = resourceByteRangeProvider.getByteRangeAsBytes(rangeStart, rangeEnd);
+        PayloadRecord payloadRecord = new PayloadRecord(bytes, PayloadRecord.PayloadAssetType.EssenceFooter4Bytes, rangeStart, rangeEnd);
+        Long randomIndexPackSize = IMPValidator.getRandomIndexPackSize(payloadRecord);
+
+        rangeStart = archiveFileSize - randomIndexPackSize;
+        rangeEnd = archiveFileSize - 1;
+
+        byte[] randomIndexPackBytes = resourceByteRangeProvider.getByteRangeAsBytes(rangeStart, rangeEnd);
+        PayloadRecord randomIndexPackPayload = new PayloadRecord(randomIndexPackBytes, PayloadRecord.PayloadAssetType.EssencePartition, rangeStart, rangeEnd);
+        List<Long> partitionByteOffsets = IMPValidator.getEssencePartitionOffsets(randomIndexPackPayload, randomIndexPackSize);
+
+        rangeStart = partitionByteOffsets.get(0);
+        rangeEnd = partitionByteOffsets.get(1) - 1;
+        byte[] headerPartitionBytes = resourceByteRangeProvider.getByteRangeAsBytes(rangeStart, rangeEnd);
+        ByteProvider byteProvider = new ByteArrayDataProvider(headerPartitionBytes);
+
+        return new HeaderPartition(byteProvider, 0L, headerPartitionBytes.length, imfErrorLogger);
+    }
+
+    /**
+     * A static method to get the Header Partition from a file
+     * @param fileLocator source file locator to get the Header Partition from
+     * @param imfErrorLogger logging object
+     * @return an HeaderPartition object constructed from the file
+     * @throws IOException any I/O related error will be exposed through an IOException
+     */
+    public static HeaderPartition fromFileLocator(FileLocator fileLocator, IMFErrorLogger imfErrorLogger) throws IOException {
+        return HeaderPartition.fromByteRangeProvider(fileLocator.getResourceByteRangeProvider(), imfErrorLogger);
+    }
+
+    /**
+     * A static method to get the Header Partition from a file
+     * @param inputFile source file to get the Header Partition from
+     * @param imfErrorLogger logging object
+     * @return an HeaderPartition object constructed from the file
+     * @throws IOException any I/O related error will be exposed through an IOException
+     */
+    public static HeaderPartition fromFile(File inputFile, IMFErrorLogger imfErrorLogger) throws IOException {
+        return HeaderPartition.fromByteRangeProvider(new FileByteRangeProvider(inputFile), imfErrorLogger);
+    }
+
+    /**
+     * Method to get the stream id (used in GenericStreamPartition) for the descriptive metadata pointed by
+     * a GenericStreamTextBasedSet object, with a given description
+     * @param description text field to match with the description field of the GenericStreamTextBasedSet object
+     * @return the generic stream id of the metadata or -1 if not found
+     */
+    public long getGenericStreamIdFromGenericStreamTextBaseSetDescription(@Nonnull String description) {
+        long sid = -1;
+        for (SourcePackage sourcePackage: this.getPreface().getContentStorage().getSourcePackageList()) {
+            for (StaticTrack staticTrack: sourcePackage.getStaticTracks()) {
+                for (DescriptiveMarkerSegment segment: staticTrack.getSequence().getDescriptiveMarkerSegments()) {
+                    DMFramework dmFramework = segment.getDmFramework();
+                    if (dmFramework instanceof TextBasedDMFramework) {
+                        TextBasedObject textBasedObject =((TextBasedDMFramework) dmFramework).getTextBaseObject();
+                        if (textBasedObject instanceof GenericStreamTextBasedSet) {
+                            if (description.equals(textBasedObject.getDescription())) {
+                                sid = ((GenericStreamTextBasedSet) textBasedObject).getGenericStreamId();
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (sid != -1) break;
+            }
+            if (sid != -1) break;
+        }
+        return sid;
+    }
+
 }

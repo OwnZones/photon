@@ -1,24 +1,4 @@
-
-# IMPORTANT NOTE
-This is an experimental fork of Photon implementing extensions to validate IMF App#5 ACES packages.
-These extensions are experimental, work-in-progress and not intended for production.
-
-You can find the Original Photon software [here](https://github.com/netflix/photon).
-
-# How to use
-The IMPAnalyzer now supports the following option:
-```
-java -cp ./build/libs/*: com.netflix.imflibrary.app.IMPAnalyzer <directory>
-```
-```
-options:            
--a, --application APPSTRING      IMF Application to test against, supported values for APPSTRING are app2or2E, app5 or all (default: app2or2E)
-```
-
-Limitation:
-The option "-a" is currently supported for the ```<package_directory>``` argument only.
-
-Please note, by default Photon tests against the App #2/#2E specification.
+[![codecov](https://codecov.io/gh/Netflix/photon/branch/master/graph/badge.svg)](https://codecov.io/gh/Netflix/photon)
 
 # Photon
 

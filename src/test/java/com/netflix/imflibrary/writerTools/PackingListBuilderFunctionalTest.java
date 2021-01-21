@@ -27,10 +27,7 @@ import com.netflix.imflibrary.RESTfulInterfaces.IMPValidator;
 import com.netflix.imflibrary.RESTfulInterfaces.PayloadRecord;
 import com.netflix.imflibrary.exceptions.IMFAuthoringException;
 import com.netflix.imflibrary.st0429_8.PackingList;
-import com.netflix.imflibrary.utils.ErrorLogger;
-import com.netflix.imflibrary.utils.FileByteRangeProvider;
-import com.netflix.imflibrary.utils.ResourceByteRangeProvider;
-import com.netflix.imflibrary.utils.Utilities;
+import com.netflix.imflibrary.utils.*;
 import com.netflix.imflibrary.writerTools.utils.IMFUtils;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -52,7 +49,7 @@ public class PackingListBuilderFunctionalTest {
 
     @Test
     public void packingListBuilder_2007_Test() throws IOException, SAXException, JAXBException {
-        File inputFile = TestHelper.findResourceByPath("TestIMP/NYCbCrLT_3840x2160x23.98x10min/PKL_0429fedd-b55d-442a-aa26-2a81ec71ed05.xml");
+        FileLocator inputFile = TestHelper.findResourceByPath("TestIMP/NYCbCrLT_3840x2160x23.98x10min/PKL_0429fedd-b55d-442a-aa26-2a81ec71ed05.xml");
         ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
 
@@ -113,7 +110,7 @@ public class PackingListBuilderFunctionalTest {
 
     @Test
     public void packingListBuilder_2016_Test() throws IOException, SAXException, JAXBException {
-        File inputFile = TestHelper.findResourceByPath("TestIMP/Netflix_Sony_Plugfest_2015/PKL_befcd2d4-f35c-45d7-99bb-7f64b51b103c_corrected.xml");
+        FileLocator inputFile = TestHelper.findResourceByPath("TestIMP/Netflix_Sony_Plugfest_2015/PKL_befcd2d4-f35c-45d7-99bb-7f64b51b103c_corrected.xml");
         ResourceByteRangeProvider resourceByteRangeProvider = new FileByteRangeProvider(inputFile);
         IMFErrorLogger imfErrorLogger = new IMFErrorLoggerImpl();
 

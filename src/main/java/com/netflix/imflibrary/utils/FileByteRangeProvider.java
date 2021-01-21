@@ -20,6 +20,7 @@ package com.netflix.imflibrary.utils;
 
 import javax.annotation.concurrent.Immutable;
 import java.io.*;
+import java.util.concurrent.ExecutionException;
 
 /**
  * This class is an implementation of {@link com.netflix.imflibrary.utils.ResourceByteRangeProvider} - the underlying
@@ -43,6 +44,20 @@ public final class FileByteRangeProvider implements ResourceByteRangeProvider
     {
         this.resourceFile = resourceFile;
         this.fileSize = this.resourceFile.length();
+    }
+
+    /**
+     * Constructor for a FileByteRangeProvider
+     * @param resourceFileLocator whose data will be read by this data provider
+     */
+    public FileByteRangeProvider(FileLocator resourceFileLocator) throws IOException
+    {
+        if (resourceFileLocator instanceof LocalFileLocator) {
+            this.resourceFile = ((LocalFileLocator) resourceFileLocator).getFile();
+            this.fileSize = this.resourceFile.length();
+        } else {
+            throw new IOException("FileByteRangeProvider only works with LocalFileLocator");
+        }
     }
 
     /**
