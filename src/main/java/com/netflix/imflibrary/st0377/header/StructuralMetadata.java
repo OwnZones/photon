@@ -639,6 +639,12 @@ public final class StructuralMetadata
             MXFUID mxfUL = new MXFUID(byteArray);
             map.put(mxfUL, "generic_stream_id");
         }
+        //Multiple Descriptor
+        {
+            byte[] byteArray = {0x06, 0x0e, 0x2b, 0x34, 0x01, 0x01, 0x01, 0x04, 0x06, 0x01, 0x01, 0x04, 0x06, 0x0b, 0x00, 0x00};
+            MXFUID mxfUL = new MXFUID(byteArray);
+            map.put(mxfUL, "subdescriptor_uids");
+        }
         ItemULToItemName = Collections.unmodifiableMap(map);
     }
 
@@ -769,7 +775,7 @@ public final class StructuralMetadata
                 case 0x43 :
                     return Object.class; //Generic Data Essence Descriptor
                 case 0x44 :
-                    return Object.class; //Multiple Descriptor
+                    return MultipleDescriptor.MultipleDescriptorB0.class; //Multiple Descriptor
                 case 0x32 :
                     return Object.class; //Network Locator
                 case 0x33 :

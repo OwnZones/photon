@@ -26,39 +26,7 @@ import com.netflix.imflibrary.MXFUID;
 import com.netflix.imflibrary.RESTfulInterfaces.IMPValidator;
 import com.netflix.imflibrary.RESTfulInterfaces.PayloadRecord;
 import com.netflix.imflibrary.exceptions.MXFException;
-import com.netflix.imflibrary.st0377.header.AudioChannelLabelSubDescriptor;
-import com.netflix.imflibrary.st0377.header.CDCIPictureEssenceDescriptor;
-import com.netflix.imflibrary.st0377.header.ContentStorage;
-import com.netflix.imflibrary.st0377.header.DMFramework;
-import com.netflix.imflibrary.st0377.header.DescriptiveMarkerSegment;
-import com.netflix.imflibrary.st0377.header.EssenceContainerData;
-import com.netflix.imflibrary.st0377.header.GenericDescriptor;
-import com.netflix.imflibrary.st0377.header.GenericPackage;
-import com.netflix.imflibrary.st0377.header.GenericPictureEssenceDescriptor;
-import com.netflix.imflibrary.st0377.header.GenericStreamTextBasedSet;
-import com.netflix.imflibrary.st0377.header.GenericTrack;
-import com.netflix.imflibrary.st0377.header.GroupOfSoundFieldGroupLabelSubDescriptor;
-import com.netflix.imflibrary.st0377.header.InterchangeObject;
-import com.netflix.imflibrary.st0377.header.JPEG2000PictureSubDescriptor;
-import com.netflix.imflibrary.st0377.header.ACESPictureSubDescriptor;
-import com.netflix.imflibrary.st0377.header.StaticTrack;
-import com.netflix.imflibrary.st0377.header.TargetFrameSubDescriptor;
-import com.netflix.imflibrary.st0377.header.MaterialPackage;
-import com.netflix.imflibrary.st0377.header.PHDRMetaDataTrackSubDescriptor;
-import com.netflix.imflibrary.st0377.header.Preface;
-import com.netflix.imflibrary.st0377.header.RGBAPictureEssenceDescriptor;
-import com.netflix.imflibrary.st0377.header.Sequence;
-import com.netflix.imflibrary.st0377.header.SoundFieldGroupLabelSubDescriptor;
-import com.netflix.imflibrary.st0377.header.SourceClip;
-import com.netflix.imflibrary.st0377.header.SourcePackage;
-import com.netflix.imflibrary.st0377.header.StructuralComponent;
-import com.netflix.imflibrary.st0377.header.StructuralMetadata;
-import com.netflix.imflibrary.st0377.header.TextBasedDMFramework;
-import com.netflix.imflibrary.st0377.header.TextBasedObject;
-import com.netflix.imflibrary.st0377.header.TimeTextResourceSubDescriptor;
-import com.netflix.imflibrary.st0377.header.TimedTextDescriptor;
-import com.netflix.imflibrary.st0377.header.TimelineTrack;
-import com.netflix.imflibrary.st0377.header.WaveAudioEssenceDescriptor;
+import com.netflix.imflibrary.st0377.header.*;
 import com.netflix.imflibrary.st2067_2.AudioContentKind;
 import com.netflix.imflibrary.st2067_2.Composition;
 import com.netflix.imflibrary.st2067_201.IABEssenceDescriptor;
@@ -492,6 +460,10 @@ public final class HeaderPartition
                     DescriptiveMarkerSegment descriptiveMarkerSegment = new DescriptiveMarkerSegment((DescriptiveMarkerSegment.DescriptiveMarkerSegmentBO) interchangeObjectBO, dmFramework);
                     this.cacheInterchangeObject(descriptiveMarkerSegment);
                     uidToMetadataSets.put(interchangeObjectBO.getInstanceUID(), descriptiveMarkerSegment);
+                } else if (interchangeObjectBO.getClass().getEnclosingClass().equals(MultipleDescriptor.class)) {
+                    MultipleDescriptor multipleDescriptor = new MultipleDescriptor((MultipleDescriptor.MultipleDescriptorB0) interchangeObjectBO);
+                    this.cacheInterchangeObject(multipleDescriptor);
+                    uidToMetadataSets.put(interchangeObjectBO.getInstanceUID(), multipleDescriptor);
                 }
             }
         }
@@ -610,7 +582,7 @@ public final class HeaderPartition
      * the Source Packages in this header partition
      * @return list of EssenceDescriptor objects referenced by the Source Packages in this HeaderPartition
      */
-    public List<InterchangeObject.InterchangeObjectBO> getEssenceDescriptors(){
+    public List<InterchangeObject.InterchangeObjectBO> getEssenceDescriptors() {
         List<InterchangeObject.InterchangeObjectBO> sourcePackageBOs = this.interchangeObjectBOsMap.get(SourcePackage.SourcePackageBO.class.getSimpleName());
         List<InterchangeObject.InterchangeObjectBO> essenceDescriptors = new ArrayList<>();
         for(int i=0; i<sourcePackageBOs.size(); i++){
@@ -620,6 +592,21 @@ public final class HeaderPartition
             }
         }
         return essenceDescriptors;
+    }
+
+    public List<InterchangeObject.InterchangeObjectBO> getMultipleDescriptor() {
+        List<InterchangeObject.InterchangeObjectBO> sourcePackageBOs = this.interchangeObjectBOsMap.get(SourcePackage.SourcePackageBO.class.getSimpleName());
+        List<InterchangeObject.InterchangeObjectBO> multipleDescriptors = new ArrayList<>();
+        for (int i = 0; i < sourcePackageBOs.size(); i += 1) {
+            SourcePackage.SourcePackageBO sourcePackageBO = (SourcePackage.SourcePackageBO) sourcePackageBOs.get(i);
+            if (uidToBOs.get(sourcePackageBO.getDescriptorUID()) != null) {
+                InterchangeObject.InterchangeObjectBO interchangeObjectBO = uidToBOs.get(sourcePackageBO.getDescriptorUID());
+                if (interchangeObjectBO.getClass().getEnclosingClass().equals(MultipleDescriptor.class)) {
+                    multipleDescriptors.add(interchangeObjectBO);
+                }
+            }
+        }
+        return multipleDescriptors;
     }
 
     /**
@@ -633,15 +620,7 @@ public final class HeaderPartition
         for(int i=0; i<sourcePackageBOs.size(); i++){
             SourcePackage.SourcePackageBO sourcePackageBO = (SourcePackage.SourcePackageBO) sourcePackageBOs.get(i);
             GenericDescriptor.GenericDescriptorBO genericDescriptorBO = (GenericDescriptor.GenericDescriptorBO)uidToBOs.get(sourcePackageBO.getDescriptorUID());
-            CompoundDataTypes.MXFCollections.MXFCollection<InterchangeObject.InterchangeObjectBO.StrongRef> strongRefsCollection = genericDescriptorBO.getSubdescriptors();
-            if(strongRefsCollection != null) {
-                List<InterchangeObject.InterchangeObjectBO.StrongRef> strongRefs = strongRefsCollection.getEntries();
-                for (InterchangeObject.InterchangeObjectBO.StrongRef strongRef : strongRefs) {
-                    if(uidToBOs.get(strongRef.getInstanceUID()) != null) {
-                        subDescriptors.add(uidToBOs.get(strongRef.getInstanceUID()));
-                    }
-                }
-            }
+            subDescriptors.addAll(this.getSubDescriptors(genericDescriptorBO));
         }
         return subDescriptors;
     }
@@ -650,11 +629,29 @@ public final class HeaderPartition
      * Gets the SubDescriptor objects corresponding to this HeaderPartition object that are referred by the specified
      * EssenceDescriptor
      * @param essenceDescriptor the essence descriptor whose referred subdescriptors are requested
+     * @param oneMoreLevel check one more level in the case of multiple descriptor
      * @return list of SubDescriptor objects referenced by the Essence Descriptors in this HeaderPartition
      */
-    public List<InterchangeObject.InterchangeObjectBO> getSubDescriptors(InterchangeObject.InterchangeObjectBO essenceDescriptor){
+    private List<InterchangeObject.InterchangeObjectBO> getSubDescriptors(InterchangeObject.InterchangeObjectBO essenceDescriptor, boolean oneMoreLevel){
         GenericDescriptor.GenericDescriptorBO genericDescriptorBO = (GenericDescriptor.GenericDescriptorBO)essenceDescriptor;
-        return this.getSubDescriptors(genericDescriptorBO.getSubdescriptors());
+        List<InterchangeObject.InterchangeObjectBO> subDescriptors = this.getSubDescriptors(genericDescriptorBO.getSubdescriptors());
+        if (essenceDescriptor.getClass().getEnclosingClass().equals(MultipleDescriptor.class)) {
+            MultipleDescriptor.MultipleDescriptorB0 multipleDescriptorB0 = (MultipleDescriptor.MultipleDescriptorB0) essenceDescriptor;
+            for (MXFUID subdescriptor : multipleDescriptorB0.getSubdescriptorUids()) {
+                InterchangeObject.InterchangeObjectBO interchangeObjectBO = this.uidToBOs.get(subdescriptor);
+                if (interchangeObjectBO != null) {
+                    subDescriptors.add(interchangeObjectBO);
+                    if (oneMoreLevel) {
+                        subDescriptors.addAll(this.getSubDescriptors(interchangeObjectBO, false));
+                    }
+                }
+            }
+        }
+        return subDescriptors;
+    }
+
+    public List<InterchangeObject.InterchangeObjectBO> getSubDescriptors(InterchangeObject.InterchangeObjectBO essenceDescriptor){
+        return this.getSubDescriptors(essenceDescriptor, true);
     }
 
 
@@ -1294,6 +1291,26 @@ public final class HeaderPartition
         PERMANENT
     }
 
+
+    private static EssenceTypeEnum essenceTypeOf(@Nonnull InterchangeObject.InterchangeObjectBO interchangeObjectBO) {
+        if(interchangeObjectBO.getClass().getEnclosingClass().equals(WaveAudioEssenceDescriptor.class)){
+            return EssenceTypeEnum.MainAudioEssence;
+        }
+        if(interchangeObjectBO.getClass().getEnclosingClass().equals(IABEssenceDescriptor.class)){
+            return EssenceTypeEnum.IABEssence;
+        }
+        else if(interchangeObjectBO.getClass().getEnclosingClass().equals(CDCIPictureEssenceDescriptor.class)){
+            return EssenceTypeEnum.MainImageEssence;
+        }
+        else if(interchangeObjectBO.getClass().getEnclosingClass().equals(RGBAPictureEssenceDescriptor.class)){
+            return EssenceTypeEnum.MainImageEssence;
+        }
+        else if(interchangeObjectBO.getClass().getEnclosingClass().equals(TimedTextDescriptor.class)){
+            return EssenceTypeEnum.SubtitlesEssence;
+        }
+        return null;
+    }
+
     /**
      * A method that retrieves all the EssenceTypes present in the MXF file
      * @return a list of all essence types present in the MXF file
@@ -1301,20 +1318,16 @@ public final class HeaderPartition
     public List<EssenceTypeEnum> getEssenceTypes() {
         List<EssenceTypeEnum> essenceTypes = new ArrayList<>();
         for(InterchangeObject.InterchangeObjectBO interchangeObjectBO : this.getEssenceDescriptors()){
-            if(interchangeObjectBO.getClass().getEnclosingClass().equals(WaveAudioEssenceDescriptor.class)){
-                essenceTypes.add(EssenceTypeEnum.MainAudioEssence);
-            }
-            if(interchangeObjectBO.getClass().getEnclosingClass().equals(IABEssenceDescriptor.class)){
-                essenceTypes.add(EssenceTypeEnum.IABEssence);
-            }
-            else if(interchangeObjectBO.getClass().getEnclosingClass().equals(CDCIPictureEssenceDescriptor.class)){
-                essenceTypes.add(EssenceTypeEnum.MainImageEssence);
-            }
-            else if(interchangeObjectBO.getClass().getEnclosingClass().equals(RGBAPictureEssenceDescriptor.class)){
-                essenceTypes.add(EssenceTypeEnum.MainImageEssence);
-            }
-            else if(interchangeObjectBO.getClass().getEnclosingClass().equals(TimedTextDescriptor.class)){
-                essenceTypes.add(EssenceTypeEnum.SubtitlesEssence);
+            if (interchangeObjectBO.getClass().getEnclosingClass().equals(MultipleDescriptor.class)) {
+                MultipleDescriptor.MultipleDescriptorB0 multipleDescriptorB0 = (MultipleDescriptor.MultipleDescriptorB0) interchangeObjectBO;
+                for (MXFUID subdescriptor: multipleDescriptorB0.getSubdescriptorUids()) {
+                    InterchangeObject.InterchangeObjectBO innerInterchangeObjectBO = this.uidToBOs.get(subdescriptor);
+                    if (innerInterchangeObjectBO != null && HeaderPartition.essenceTypeOf(innerInterchangeObjectBO) != null) {
+                        essenceTypes.add(HeaderPartition.essenceTypeOf(innerInterchangeObjectBO));
+                    }
+                }
+            } else if (HeaderPartition.essenceTypeOf(interchangeObjectBO) != null) {
+                essenceTypes.add(HeaderPartition.essenceTypeOf(interchangeObjectBO));
             }
         }
 
