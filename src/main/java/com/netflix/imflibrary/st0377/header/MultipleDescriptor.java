@@ -24,6 +24,7 @@ public class MultipleDescriptor extends FileDescriptor {
     }
 
     @Immutable
+    @SuppressWarnings({"PMD.FinalFieldCouldBeStatic"})
     public static final class MultipleDescriptorB0 extends FileDescriptor.FileDescriptorBO {
         @MXFProperty(size=0, depends=true)
         private final CompoundDataTypes.MXFCollections.MXFCollection<StrongRef> subdescriptor_uids = null;
