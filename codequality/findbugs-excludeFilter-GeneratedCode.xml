@@ -136,4 +136,10 @@
         <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NULL_VALUE" />
     </Match>
 
+    <!-- Storing a reference to an externally mutable object into the internal representation of the object. -->
+    <Match>
+        <Source name="MultipleDescriptor.java" />
+        <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NULL_VALUE" />
+    </Match>
+
 </FindBugsFilter>
